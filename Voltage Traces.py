@@ -96,9 +96,9 @@ def main():
     if plot == 'yes':
 
         starting_neuron = 0
-        number_of_plots = range(starting_neuron,400,200)
+        number_of_plots = range(starting_neuron,400,50)
         number_of_nodes = len(measurements[starting_neuron])
-        number_of_timesteps = len(measurements[starting_neuron][0]  #alterrnativ: 200
+        number_of_timesteps = len(measurements[starting_neuron][0])
         time_steps = list(range(number_of_timesteps))
 
         for k in number_of_plots:
