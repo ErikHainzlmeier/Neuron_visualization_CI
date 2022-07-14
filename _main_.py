@@ -14,7 +14,7 @@ import maya.cmds as cmds
 coords_filepath = "C:\\Users\\Rafael\\Desktop\\praktikum bioanaloge\\ci_refine_list_mdl\\ci_refine_list_mdl.pkl"
 # coords_filepath = "C:\\Users\\Erik\\Documents\\Elektrotechnik\\Master\\SS2022\\Projektpraktikum\\ci_refine_list_mdl.pkl"
 measurements_filepath = "C:\\Users\\Rafael\\Desktop\\praktikum bioanaloge\\projektpraktikum_animation_ss2022\\Rattay_2013_e7_o2.0_0.001000149883801424A.p"
-number_of_nodes = 49
+
 
 
 def unflatten_nlist(l):
@@ -99,16 +99,17 @@ def import_neuron_coordinates():
     # coordinates for the neuron paths
     # list of 400 elements of variable length x 3 matrix
 
-    vertices = om.MPointArray()
+
+    vertices = []
     for i in range(0, 400, 1):
-        vertices = om.MPointArray()
+        vertices.append(om.MPointArray())
         for eachPos in obj[i][:]:
             # make a point array out of coordinates from .pkl file for every neuron
             mPoint = om.MPoint()
             mPoint.x = eachPos[0]
             mPoint.y = eachPos[1]
             mPoint.z = eachPos[2]
-            vertices.append(mPoint)
+            vertices[i].append(mPoint)
 
         # print(len(obj[i][:]))
         # if i != 0:
@@ -135,26 +136,26 @@ def import_neuron_coordinates():
 
 def create_curves(vertices):
     # returns list of 400 curve objects, and list of 400 spans (int)
+    print("building curves...")
 
     curves = []
+    spans = []
     cmds.group(em=True, name='curves')
-
     # iterrate through curves
     for i in range(len(vertices)):
         # create a curve for every neuron following along the vertices
         cmds.curve(pw=vertices[i])
-
         # rebuild curve with different units
-        spans = cmds.getAttr(".spans")
-        current_curve = cmds.rebuildCurve(rt=0, s=spans)
+        current_spans = cmds.getAttr(".spans")
+        spans.append(current_spans)
+        current_curve = cmds.rebuildCurve(rt=0, s=current_spans)
         cmds.parent(current_curve, 'curves')
-
         curves.append(current_curve)
 
     return curves, spans
 
 
-def calculate_node_coords(curves, spans):
+def calculate_node_coords(number_of_nodes, curves, spans):
     node_coords = []
 
     # limit max number of nodes per neuron
@@ -176,6 +177,7 @@ def calculate_node_coords(curves, spans):
 
 
 def create_nodes(node_coords):
+    print("creating nodes...")
     node_size = 0.03
     node = []
     shader = []
@@ -186,33 +188,33 @@ def create_nodes(node_coords):
         node.append([])  # Neues Neuron erstellen
         shader.append([])
         current_group = cmds.group(em=True, name='neuron' + str(i), parent='nodes')
-
+        print("Iterating neuron", i, ":", len(node_coords))
         # iterate through nodes
-        for j in range():
+        for j in range(len(node_coords[i])):
             current_node = cmds.polySphere(r=node_size, name='mySphere#')
-            node[i][j] = current_node
+            node[i].append(current_node)
             cmds.parent(node[i][j], current_group)
 
             cmds.move(node_coords[i][j][0], node_coords[i][j][1], node_coords[i][j][2])
 
+
             # create new shader and assign a color to it
             current_shader = cmds.shadingNode('aiStandardSurface', asShader=1, name='Shader#')
             cmds.setAttr((current_shader + '.baseColor'), 1, 1, 1, type='double3')
-            shader[i][j].append(current_shader)
-
-            # Verbinde Object mit Shader
-            # selection = cmds.ls(sl=1)
-            cmds.select(selection[0])
+            shader[i].append(current_shader)
+            cmds.select(current_node)
             cmds.hyperShade(a=current_shader)
 
     return node, shader
 
 
 def create_frames(shader, measurements):
+    print("creating frames...")
     # iterate through all neurons
     for i in range(len(shader)):
         # iterate through all nodes
         for j in range(len(shader[i])):
+            print("Iteration: Neuron", i, "Node", j)
             # iterate through all measurement steps
             for k in range(len(measurements[i][j])):
                 red = measurements[i][j][k]
@@ -224,11 +226,12 @@ def create_frames(shader, measurements):
 
 
 def main():
+    number_of_nodes = 20
     vertices = import_neuron_coordinates()
     measurements = import_voltage_traces()
 
     curves, spans = create_curves(vertices)
-    node_coords = calculate_node_coords(curves, spans)
+    node_coords = calculate_node_coords(number_of_nodes, curves, spans)
     nodes, shader = create_nodes(node_coords)
     create_frames(shader, measurements)
 
