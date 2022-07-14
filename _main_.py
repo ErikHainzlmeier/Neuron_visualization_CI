@@ -1,21 +1,22 @@
 import numpy as np
+import pandas as pd
 import fpzip
 import pickle
 import importlib
 import peakutils as peak
-#import thorns as th
-#from sys import getsizeof
-#from brian2 import *
-
 import functools
 import operator
+import maya.api.OpenMaya as om
+import maya.cmds as cmds
 
-import pandas as pd
-import matplotlib.pyplot as plt
-from matplotlib import cm
+# Global Variables
 
-#import voltage traces
-'''
+coords_filepath = "C:\\Users\\Rafael\\Desktop\\praktikum bioanaloge\\ci_refine_list_mdl\\ci_refine_list_mdl.pkl"
+# coords_filepath = "C:\\Users\\Erik\\Documents\\Elektrotechnik\\Master\\SS2022\\Projektpraktikum\\ci_refine_list_mdl.pkl"
+measurements_filepath = "C:\\Users\\Rafael\\Desktop\\praktikum bioanaloge\\projektpraktikum_animation_ss2022\\Rattay_2013_e7_o2.0_0.001000149883801424A.p"
+number_of_nodes = 49
+
+
 def unflatten_nlist(l):
     # restore a previously for compression purpose flattened list
     # this function is coded to re-nest according to specific parameters added while flattening
@@ -48,12 +49,12 @@ def unflatten_nlist(l):
 
 
 def decompress(data):
-	# decompress data and return list into the nested format, indexed by [neuron number][compartment][time], values in V
-	decompressed = fpzip.decompress(data, order='C')
-	while np.shape(decompressed)[0]==1:
-		decompressed = decompressed[0]
+    # decompress data and return list into the nested format, indexed by [neuron number][compartment][time], values in V
+    decompressed = fpzip.decompress(data, order='C')
+    while np.shape(decompressed)[0] == 1:
+        decompressed = decompressed[0]
 
-	return unflatten_nlist(decompressed)
+    return unflatten_nlist(decompressed)
 
 
 def read_decompress(save_path, us_before=50):
@@ -84,42 +85,152 @@ def read_decompress(save_path, us_before=50):
     return decompressed
 
 
+def import_voltage_traces():
+    measurements = read_decompress(measurements_filepath)
+    # print(len(measurements))
+    return measurements
+
+
+def import_neuron_coordinates():
+    obj = pd.read_pickle(coords_filepath)
+
+    # Create neuron fibres from coordinate data
+    # ci_refine_list_mdl.pkl
+    # coordinates for the neuron paths
+    # list of 400 elements of variable length x 3 matrix
+
+    vertices = om.MPointArray()
+    for i in range(0, 400, 1):
+        vertices = om.MPointArray()
+        for eachPos in obj[i][:]:
+            # make a point array out of coordinates from .pkl file for every neuron
+            mPoint = om.MPoint()
+            mPoint.x = eachPos[0]
+            mPoint.y = eachPos[1]
+            mPoint.z = eachPos[2]
+            vertices.append(mPoint)
+
+        # print(len(obj[i][:]))
+        # if i != 0:
+        # cmds.curve(pw=vertices[len(obj[i-1][:])+1 : len(obj[i-1][:])+len(obj[i][:])])
+        # print(vertices[len(obj[i-1][:])+1 : len(obj[i-1][:])+len(obj[i][:])])
+        # else:
+
+        # create a curve for every neuron following along the vertices
+        #cmds.curve(pw=vertices)
+
+    '''
+        obj = pd.read_pickle(coords_filepath)
+        for i in range(0,399,100):
+            for j in range(len(obj[i])-2):
+                x = obj[i][j][0]
+                y = obj[i][j][1]
+                z = obj[i][j][2]
+                cmds.polyCylinder(r=0.02, name='myCylinder#')
+                cmds.move(x, y, z)
+    '''
+
+    return vertices
+
+
+def create_curves(vertices):
+    # returns list of 400 curve objects, and list of 400 spans (int)
+
+    curves = []
+    cmds.group(em=True, name='curves')
+
+    # iterrate through curves
+    for i in range(len(vertices)):
+        # create a curve for every neuron following along the vertices
+        cmds.curve(pw=vertices[i])
+
+        # rebuild curve with different units
+        spans = cmds.getAttr(".spans")
+        current_curve = cmds.rebuildCurve(rt=0, s=spans)
+        cmds.parent(current_curve, 'curves')
+
+        curves.append(current_curve)
+
+    return curves, spans
+
+
+def calculate_node_coords(curves, spans):
+    node_coords = []
+
+    # limit max number of nodes per neuron
+    if number_of_nodes > 49:
+        number_of_nodes = 49
+
+    # iterate through every neuron
+    for i in range(len(curves)):
+        # calculate node positions on the curve
+        node_params = np.linspace(0, spans[i], num=number_of_nodes)
+        node_coords.append([])
+
+        # iterate through every node
+        for j in range(number_of_nodes):
+            current_coords = cmds.pointOnCurve(curves[i], pr=node_params[j], p=True)
+            node_coords[i].append(current_coords)
+
+    return node_coords
+
+
+def create_nodes(node_coords):
+    node_size = 0.03
+    node = []
+    shader = []
+    cmds.group(em=True, name='nodes')
+
+    # iterate through neurons
+    for i in range(len(node_coords)):
+        node.append([])  # Neues Neuron erstellen
+        shader.append([])
+        current_group = cmds.group(em=True, name='neuron' + str(i), parent='nodes')
+
+        # iterate through nodes
+        for j in range():
+            current_node = cmds.polySphere(r=node_size, name='mySphere#')
+            node[i][j] = current_node
+            cmds.parent(node[i][j], current_group)
+
+            cmds.move(node_coords[i][j][0], node_coords[i][j][1], node_coords[i][j][2])
+
+            # create new shader and assign a color to it
+            current_shader = cmds.shadingNode('aiStandardSurface', asShader=1, name='Shader#')
+            cmds.setAttr((current_shader + '.baseColor'), 1, 1, 1, type='double3')
+            shader[i][j].append(current_shader)
+
+            # Verbinde Object mit Shader
+            # selection = cmds.ls(sl=1)
+            cmds.select(selection[0])
+            cmds.hyperShade(a=current_shader)
+
+    return node, shader
+
+
+def create_frames(shader, measurements):
+    # iterate through all neurons
+    for i in range(len(shader)):
+        # iterate through all nodes
+        for j in range(len(shader[i])):
+            # iterate through all measurement steps
+            for k in range(len(measurements[i][j])):
+                red = measurements[i][j][k]
+                green = 1 - measurements[i][j][k]
+                blue = 1 - measurements[i][j][k]
+                cmds.setKeyframe(shader[i][j], time=k, attribute='baseColorR', value=red)
+                cmds.setKeyframe(shader[i][j], time=k, attribute='baseColorG', value=green)
+                cmds.setKeyframe(shader[i][j], time=k, attribute='baseColorB', value=blue)
+
+
 def main():
-    save_path = "C:\\Users\\Rafael\\Desktop\\praktikum bioanaloge\\projektpraktikum_animation_ss2022\\Rattay_2013_e7_o2.0_0.001000149883801424A.p"
-    #data = pd.read_pickle(filepath)
+    vertices = import_neuron_coordinates()
+    measurements = import_voltage_traces()
 
-    measurements = read_decompress(save_path)
-    print(len(measurements))
-
-
-    plot = 'yes'
-
-    if plot == 'yes':
-
-        starting_neuron = 0
-        number_of_plots = range(starting_neuron,400,50)
-        number_of_nodes = len(measurements[starting_neuron])
-        number_of_timesteps = len(measurements[starting_neuron][0])
-        time_steps = list(range(number_of_timesteps))
-
-        for k in number_of_plots:
-            current_neuron = starting_neuron +k
-            fig = plt.figure(k)
-            ax = fig.add_subplot(111, projection='3d')
-
-            for i in range(number_of_nodes):
-                x_vals = time_steps
-                y_vals = i + np.zeros(number_of_timesteps)
-                z_vals = measurements[current_neuron][i][0:number_of_timesteps]
-                ax.plot(x_vals, y_vals, z_vals)
-
-            plt.xlabel('timestep')
-            plt.ylabel('compartment')
-
-            plt.show()
-
-'''
-
+    curves, spans = create_curves(vertices)
+    node_coords = calculate_node_coords(curves, spans)
+    nodes, shader = create_nodes(node_coords)
+    create_frames(shader, measurements)
 
 
 main()
