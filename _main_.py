@@ -134,7 +134,7 @@ def import_neuron_coordinates():
     return vertices
 
 
-def create_curves(vertices):
+def create_curves(vertices, disp_neur):
     # returns list of 400 curve objects, and list of 400 spans (int)
     print("building curves...")
 
@@ -142,7 +142,7 @@ def create_curves(vertices):
     spans = []
     cmds.group(em=True, name='curves')
     # iterrate through curves
-    for i in range(len(vertices)):
+    for i in disp_neur:
         # create a curve for every neuron following along the vertices
         cmds.curve(pw=vertices[i])
         # rebuild curve with different units
@@ -155,7 +155,7 @@ def create_curves(vertices):
     return curves, spans
 
 
-def calculate_node_coords(number_of_nodes, curves, spans):
+def calculate_node_coords(number_of_nodes, curves, spans, disp_neur):
     node_coords = []
 
     # limit max number of nodes per neuron
@@ -163,7 +163,7 @@ def calculate_node_coords(number_of_nodes, curves, spans):
         number_of_nodes = 49
 
     # iterate through every neuron
-    for i in range(len(curves)):
+    for i in range(len(disp_neur)):
         # calculate node positions on the curve
         node_params = np.linspace(0, spans[i], num=number_of_nodes)
         node_coords.append([])
@@ -176,7 +176,7 @@ def calculate_node_coords(number_of_nodes, curves, spans):
     return node_coords
 
 
-def create_nodes(node_coords):
+def create_nodes(node_coords, disp_neur):
     print("creating nodes...")
     node_size = 0.03
     node = []
@@ -184,14 +184,15 @@ def create_nodes(node_coords):
     cmds.group(em=True, name='nodes')
 
     # iterate through neurons
-    for i in range(len(node_coords)):
+    for i in range(len(disp_neur)):
         node.append([])  # Neues Neuron erstellen
         shader.append([])
         current_group = cmds.group(em=True, name='neuron' + str(i), parent='nodes')
-        print("Iterating neuron", i, ":", len(node_coords))
+        #print("Iterating neuron", i, ":", len(node_coords))
         # iterate through nodes
         for j in range(len(node_coords[i])):
-            current_node = cmds.polySphere(r=node_size, name='mySphere#')
+            #current_node = cmds.polySphere(r=node_size, name='mySphere#', sx=5, sy=5)
+            current_node = cmds.sphere(r=node_size, s=4, name='mySphere#')
             node[i].append(current_node)
             cmds.parent(node[i][j], current_group)
 
@@ -208,32 +209,35 @@ def create_nodes(node_coords):
     return node, shader
 
 
-def create_frames(shader, measurements):
+def create_frames(shader, measurements, disp_neur):
     print("creating frames...")
     # iterate through all neurons
-    for i in range(len(shader)):
+    for i in range(len(disp_neur)):
         # iterate through all nodes
         for j in range(len(shader[i])):
-            print("Iteration: Neuron", i, "Node", j)
+            print("Iteration: Neuron", disp_neur[i], "Node", j)
             # iterate through all measurement steps
             for k in range(len(measurements[i][j])):
-                red = measurements[i][j][k]
-                green = 1 - measurements[i][j][k]
-                blue = 1 - measurements[i][j][k]
+                red = measurements[disp_neur[i]][j][k]
+                green = 1 - measurements[disp_neur[i]][j][k]
+                blue = 1 - measurements[disp_neur[i]][j][k]
                 cmds.setKeyframe(shader[i][j], time=k, attribute='baseColorR', value=red)
                 cmds.setKeyframe(shader[i][j], time=k, attribute='baseColorG', value=green)
                 cmds.setKeyframe(shader[i][j], time=k, attribute='baseColorB', value=blue)
 
 
 def main():
-    number_of_nodes = 20
+    number_of_nodes = 49
+    disp_neur = range(239, 241)   #display neuron from ... to ...
+
+
     vertices = import_neuron_coordinates()
     measurements = import_voltage_traces()
 
-    curves, spans = create_curves(vertices)
-    node_coords = calculate_node_coords(number_of_nodes, curves, spans)
-    nodes, shader = create_nodes(node_coords)
-    create_frames(shader, measurements)
+    curves, spans = create_curves(vertices, disp_neur)
+    node_coords = calculate_node_coords(number_of_nodes, curves, spans, disp_neur)
+    nodes, shader = create_nodes(node_coords, disp_neur)
+    create_frames(shader, measurements, disp_neur)
 
 
 main()
