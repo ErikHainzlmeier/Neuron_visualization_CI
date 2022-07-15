@@ -86,12 +86,14 @@ def read_decompress(save_path, us_before=50):
 
 
 def import_voltage_traces():
+    print("Import voltage traces...")
     measurements = read_decompress(measurements_filepath)
     # print(len(measurements))
     return measurements
 
 
 def import_neuron_coordinates():
+    print("Import coordinates...")
     obj = pd.read_pickle(coords_filepath)
 
     # Create neuron fibres from coordinate data
@@ -156,6 +158,7 @@ def create_curves(vertices, disp_neur):
 
 
 def calculate_node_coords(number_of_nodes, curves, spans, disp_neur):
+    print("Calcualting coordinates of nodes...")
     node_coords = []
 
     # limit max number of nodes per neuron
@@ -191,6 +194,7 @@ def create_nodes(node_coords, disp_neur):
         #print("Iterating neuron", i, ":", len(node_coords))
         # iterate through nodes
         for j in range(len(node_coords[i])):
+            print("Node creation... Neuron", disp_neur[i], "Node", j)
             #current_node = cmds.polySphere(r=node_size, name='mySphere#', sx=5, sy=5)
             current_node = cmds.sphere(r=node_size, s=4, name='mySphere#')
             node[i].append(current_node)
@@ -215,21 +219,35 @@ def create_frames(shader, measurements, disp_neur):
     for i in range(len(disp_neur)):
         # iterate through all nodes
         for j in range(len(shader[i])):
-            print("Iteration: Neuron", disp_neur[i], "Node", j)
+            print("Frame creation... Neuron", disp_neur[i], "Node", j)
             # iterate through all measurement steps
+            max_v = max(measurements[i][j])
+            min_v = min(measurements[i][j])
+            threshold = min_v + 0.09 * (max_v - min_v)
+            pre_threshold = min_v + 0.06 * (max_v - min_v)
+            #post_threshold = min_v + 0.65 * (max_v - min_v)
             for k in range(len(measurements[i][j])):
-                red = measurements[disp_neur[i]][j][k]
-                green = 1 - measurements[disp_neur[i]][j][k]
-                blue = 1 - measurements[disp_neur[i]][j][k]
-                cmds.setKeyframe(shader[i][j], time=k, attribute='baseColorR', value=red)
-                cmds.setKeyframe(shader[i][j], time=k, attribute='baseColorG', value=green)
-                cmds.setKeyframe(shader[i][j], time=k, attribute='baseColorB', value=blue)
+                if measurements[i][j][k] > threshold:
+                    red = 1
+                    green = min(1, 1 - 20 * measurements[disp_neur[i]][j][k])
+                    blue = min(1, 1 - 20 * measurements[disp_neur[i]][j][k])
+                    cmds.setKeyframe(shader[i][j], time=k, attribute='baseColorR', value=red)
+                    cmds.setKeyframe(shader[i][j], time=k, attribute='baseColorG', value=green)
+                    cmds.setKeyframe(shader[i][j], time=k, attribute='baseColorB', value=blue)
+                elif measurements[i][j][k] > pre_threshold and measurements[i][j][k] < threshold:
+                    red = 1
+                    green = 1
+                    blue = 1
+                    cmds.setKeyframe(shader[i][j], time=k, attribute='baseColorR', value=red)
+                    cmds.setKeyframe(shader[i][j], time=k, attribute='baseColorG', value=green)
+                    cmds.setKeyframe(shader[i][j], time=k, attribute='baseColorB', value=blue)
+
 
 
 def main():
     number_of_nodes = 49
     disp_neur = range(239, 241)   #display neuron from ... to ...
-
+    create_frames = "no"
 
     vertices = import_neuron_coordinates()
     measurements = import_voltage_traces()
@@ -237,7 +255,9 @@ def main():
     curves, spans = create_curves(vertices, disp_neur)
     node_coords = calculate_node_coords(number_of_nodes, curves, spans, disp_neur)
     nodes, shader = create_nodes(node_coords, disp_neur)
-    create_frames(shader, measurements, disp_neur)
+    if create_frames == "yes":
+        create_frames(shader, measurements, disp_neur)
 
+    print("finished :)")
 
 main()
