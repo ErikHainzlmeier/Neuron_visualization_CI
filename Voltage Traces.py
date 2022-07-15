@@ -95,14 +95,14 @@ def main():
 
     if plot == 'yes':
 
-        starting_neuron = 0
-        number_of_plots = range(starting_neuron,400,50)
+        starting_neuron = 230
+        number_of_plots = range(starting_neuron,260,5)
         number_of_nodes = len(measurements[starting_neuron])
         number_of_timesteps = len(measurements[starting_neuron][0])
         time_steps = list(range(number_of_timesteps))
 
         for k in number_of_plots:
-            current_neuron = starting_neuron +k
+            current_neuron = k
             fig = plt.figure(k)
             ax = fig.add_subplot(111, projection='3d')
 
