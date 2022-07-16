@@ -247,7 +247,7 @@ def create_frames(shader, measurements, disp_neur):
 def main():
     number_of_nodes = 49
     disp_neur = range(239, 241)   #display neuron from ... to ...
-    create_frames = "no"
+    frame_creation = "yes"
 
     vertices = import_neuron_coordinates()
     measurements = import_voltage_traces()
@@ -255,7 +255,7 @@ def main():
     curves, spans = create_curves(vertices, disp_neur)
     node_coords = calculate_node_coords(number_of_nodes, curves, spans, disp_neur)
     nodes, shader = create_nodes(node_coords, disp_neur)
-    if create_frames == "yes":
+    if frame_creation == "yes":
         create_frames(shader, measurements, disp_neur)
 
     print("finished :)")
