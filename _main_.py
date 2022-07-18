@@ -214,7 +214,7 @@ def create_nodes(node_coords, disp_neur):
     return node, shader
 
 
-def create_frames(shader, measurements, disp_neur):
+def create_frames(shader, measurements, disp_neur, frame_divider):
     print("creating frames...")
     # iterate through all neurons
     for i in range(len(disp_neur)):
@@ -227,7 +227,7 @@ def create_frames(shader, measurements, disp_neur):
             threshold = min_v + 0.09 * (max_v - min_v)
             pre_threshold = min_v + 0.06 * (max_v - min_v)
             #post_threshold = min_v + 0.65 * (max_v - min_v)
-            for k in range(len(measurements[i][j])):
+            for k in range(0, len(measurements[i][j]), frame_divider): # frame divider for example only sets every 10th measurement as a keyframe
                 if measurements[i][j][k] > threshold:
                     red = 1
                     green = min(1, 1 - 20 * measurements[disp_neur[i]][j][k])
@@ -246,9 +246,10 @@ def create_frames(shader, measurements, disp_neur):
 
 
 def main():
-    number_of_nodes = 49
+    number_of_nodes = 40
+    frame_divider = 10
     disp_neur = range(239, 241)   #display neuron from ... to ...
-    create_frames = "no"
+    creation_frames = "yes"
 
     vertices = import_neuron_coordinates()
     measurements = import_voltage_traces()
@@ -256,8 +257,8 @@ def main():
     curves, spans = create_curves(vertices, disp_neur)
     node_coords = calculate_node_coords(number_of_nodes, curves, spans, disp_neur)
     nodes, shader = create_nodes(node_coords, disp_neur)
-    if create_frames == "yes":
-        create_frames(shader, measurements, disp_neur)
+    if creation_frames == "yes":
+        create_frames(shader, measurements, disp_neur, frame_divider)
 
     print("finished :)")
 
