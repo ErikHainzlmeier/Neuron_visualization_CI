@@ -158,6 +158,7 @@ def create_curves(vertices, disp_neur):
 
 
 def calculate_node_coords(number_of_nodes, curves, spans, disp_neur):
+    # that is how the node coordinates are created. here the mapping regarding the compartments should take place
     print("Calcualting coordinates of nodes...")
     node_coords = []
 
