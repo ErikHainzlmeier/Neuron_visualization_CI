@@ -246,7 +246,14 @@ def create_frames(shader, measurements, disp_neur, frame_divider):
 
 
 def main():
-    number_of_nodes = 40
+    ## cleaning the scene and all unused objects before creating new ones
+    cmds.select(all=True)
+    mySel = cmds.ls(sl=1)  # my current selection
+    cmds.cutKey(mySel, s=True)  # delete key command
+    cmds.delete()
+    mel.eval('hyperShadePanelMenuCommand("hyperShadePanel1", "deleteUnusedNodes");')
+    ###################################################
+    number_of_nodes = 50
     frame_divider = 10
     disp_neur = range(239, 241)   #display neuron from ... to ...
     creation_frames = "yes"
