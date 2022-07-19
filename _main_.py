@@ -8,6 +8,7 @@ import functools
 import operator
 import maya.api.OpenMaya as om
 import maya.cmds as cmds
+import maya.mel as mel
 
 # Global Variables
 
@@ -227,6 +228,7 @@ def create_frames(shader, measurements, disp_neur, frame_divider):
             threshold = min_v + 0.09 * (max_v - min_v)
             pre_threshold = min_v + 0.06 * (max_v - min_v)
             #post_threshold = min_v + 0.65 * (max_v - min_v)
+            # go through all neurons and compartments
             for k in range(0, len(measurements[i][j]), frame_divider): # frame divider for example only sets every 10th measurement as a keyframe
                 if measurements[i][j][k] > threshold:
                     red = 1
@@ -248,10 +250,11 @@ def create_frames(shader, measurements, disp_neur, frame_divider):
 def main():
     ## cleaning the scene and all unused objects before creating new ones
     cmds.select(all=True)
-    mySel = cmds.ls(sl=1)  # my current selection
-    cmds.cutKey(mySel, s=True)  # delete key command
-    cmds.delete()
-    mel.eval('hyperShadePanelMenuCommand("hyperShadePanel1", "deleteUnusedNodes");')
+    mySel = cmds.ls(sl=1)
+    if len(mySel) != 0: # my current selection
+        cmds.cutKey(mySel, s=True)  # delete key command
+        cmds.delete()
+        mel.eval('hyperShadePanelMenuCommand("hyperShadePanel1", "deleteUnusedNodes");')
     ###################################################
     number_of_nodes = 50
     frame_divider = 10
