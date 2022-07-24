@@ -8,13 +8,14 @@ import functools
 import operator
 import maya.api.OpenMaya as om
 import maya.cmds as cmds
+import maya.mel as mel
 
 # Global Variables
 
-coords_filepath = "C:\\Users\\Rafael\\Desktop\\praktikum bioanaloge\\ci_refine_list_mdl\\ci_refine_list_mdl.pkl"
-# coords_filepath = "C:\\Users\\Erik\\Documents\\Elektrotechnik\\Master\\SS2022\\Projektpraktikum\\ci_refine_list_mdl.pkl"
-measurements_filepath = "C:\\Users\\Rafael\\Desktop\\praktikum bioanaloge\\projektpraktikum_animation_ss2022\\Rattay_2013_e7_o2.0_0.001000149883801424A.p"
-
+#coords_filepath = "C:\\Users\\Rafael\\Desktop\\praktikum bioanaloge\\ci_refine_list_mdl\\ci_refine_list_mdl.pkl"
+coords_filepath = "C:\\Users\\Erik\\Documents\\Elektrotechnik\\Master\\SS2022\\Projektpraktikum\\ci_refine_list_mdl.pkl"
+#measurements_filepath = "C:\\Users\\Rafael\\Desktop\\praktikum bioanaloge\\projektpraktikum_animation_ss2022\\Rattay_2013_e7_o2.0_0.001000149883801424A.p"
+measurements_filepath = "C:\\Users\\Erik\\Documents\\Elektrotechnik\\Master\\SS2022\\Projektpraktikum\\projektpraktikum_animation_ss2022\\projektpraktikum_animation_ss2022\\Rattay_2013_e7_o2.0_0.001000149883801424A.p"
 
 
 def unflatten_nlist(l):
@@ -158,6 +159,7 @@ def create_curves(vertices, disp_neur):
 
 
 def calculate_node_coords(number_of_nodes, curves, spans, disp_neur):
+    # that is how the node coordinates are created. here the mapping regarding the compartments should take place
     print("Calcualting coordinates of nodes...")
     node_coords = []
 
@@ -179,7 +181,7 @@ def calculate_node_coords(number_of_nodes, curves, spans, disp_neur):
     return node_coords
 
 
-def create_nodes(node_coords, disp_neur):
+def create_nodes(node_coords, disp_neur, material_name):
     print("creating nodes...")
     node_size = 0.03
     node = []
@@ -196,24 +198,33 @@ def create_nodes(node_coords, disp_neur):
         for j in range(len(node_coords[i])):
             print("Node creation... Neuron", disp_neur[i], "Node", j)
             #current_node = cmds.polySphere(r=node_size, name='mySphere#', sx=5, sy=5)
-            current_node = cmds.sphere(r=node_size, s=4, name='mySphere#')
+            current_node = cmds.sphere(r=node_size, s=4, name='mySphere#') # output of current_node is i.e ['mySphere1', 'makeNurbSphere1']
             node[i].append(current_node)
-            cmds.parent(node[i][j], current_group)
+            cmds.parent(node[i][j][0], current_group) # here we have to reference to the first entry of current_node, otherwise parenting can not happen
 
             cmds.move(node_coords[i][j][0], node_coords[i][j][1], node_coords[i][j][2])
 
 
             # create new shader and assign a color to it
-            current_shader = cmds.shadingNode('aiStandardSurface', asShader=1, name='Shader#')
-            cmds.setAttr((current_shader + '.baseColor'), 1, 1, 1, type='double3')
+            current_shader, shading_Group = applyMaterial(current_node[0], material_name)
+            #current_shader = cmds.shadingNode('standardSurface', asShader=1, name='Shader#')
+            #cmds.setAttr((current_shader + '.baseColor'), 1, 1, 1, type='double3')
             shader[i].append(current_shader)
-            cmds.select(current_node)
-            cmds.hyperShade(a=current_shader)
+            cmds.sets(current_node[0], forceElement=shading_Group)
+            #cmds.select(current_node[0])
+            #cmds.hyperShade(a=current_shader)
 
     return node, shader
 
+def applyMaterial(node, material_name): #
+    if cmds.objExists(node): # create a shader with material_name & shading group node named for the object
+        shd = cmds.shadingNode(material_name, name="%s_shader" % node, asShader=True)
+        shdSG = cmds.sets(name='%sSG' % shd, empty=True, renderable=True, noSurfaceShader=True)
+        cmds.connectAttr('%s.outColor' % shd, '%s.surfaceShader' % shdSG)
+        #cmds.sets(node, empty=True, forceElement=shdSG)
+        return shd, shdSG
 
-def create_frames(shader, measurements, disp_neur):
+def create_frames(shader, measurements, disp_neur, frame_divider):
     print("creating frames...")
     # iterate through all neurons
     for i in range(len(disp_neur)):
@@ -226,7 +237,8 @@ def create_frames(shader, measurements, disp_neur):
             threshold = min_v + 0.09 * (max_v - min_v)
             pre_threshold = min_v + 0.06 * (max_v - min_v)
             #post_threshold = min_v + 0.65 * (max_v - min_v)
-            for k in range(len(measurements[i][j])):
+            # go through all neurons and compartments
+            for k in range(0, len(measurements[i][j]), frame_divider): # frame divider for example only sets every 10th measurement as a keyframe
                 if measurements[i][j][k] > threshold:
                     red = 1
                     green = min(1, 1 - 20 * measurements[disp_neur[i]][j][k])
@@ -245,20 +257,30 @@ def create_frames(shader, measurements, disp_neur):
 
 
 def main():
-    number_of_nodes = 49
+    ## cleaning the scene and all unused objects before creating new ones
+    cmds.select(all=True)
+    mySel = cmds.ls(sl=1)
+    if len(mySel) != 0: # my current selection
+        cmds.cutKey(mySel, s=True)  # delete key command
+        cmds.delete()
+        mel.eval('hyperShadePanelMenuCommand("hyperShadePanel1", "deleteUnusedNodes");')
+    ###################################################
+    number_of_nodes = 50
+    frame_divider = 10
     disp_neur = range(239, 241)   #display neuron from ... to ...
-    create_frames = "no"
+    creation_frames = "yes"
+    material_name='standardSurface'
 
     vertices = import_neuron_coordinates()
     measurements = import_voltage_traces()
 
     curves, spans = create_curves(vertices, disp_neur)
     node_coords = calculate_node_coords(number_of_nodes, curves, spans, disp_neur)
-    nodes, shader = create_nodes(node_coords, disp_neur)
-    if create_frames == "yes":
-        create_frames(shader, measurements, disp_neur)
+    nodes, shader = create_nodes(node_coords, disp_neur, material_name)
+    if creation_frames == "yes":
+        create_frames(shader, measurements, disp_neur, frame_divider)
 
     print("finished :)")
 
 if __name__ == "__main__":
-main()
+    main()
