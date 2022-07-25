@@ -11,10 +11,10 @@ with open('R13_2.3mm_compartment_lengths.csv', newline='') as inputfile:
 with open('compartmentlengths_mm.pkl', 'wb') as f:
     pickle.dump(compartmentlengths_array, f)
 
-#with open('compartmentlengths_mm.pkl', 'rb') as f:
-    #results = pickle.load(f)
+with open('centercoordinates.pkl', 'rb') as f:
+    results = pickle.load(f)
 
 #results = np.array(results)
 
 
-#print(results)
+print(results)
