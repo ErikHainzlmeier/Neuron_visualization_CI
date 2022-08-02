@@ -157,24 +157,37 @@ def create_curves(vertices, disp_neur):
     return curves, spans
 
 
-def calculate_node_coords(number_of_nodes, curves, spans, disp_neur):
+def calculate_node_coords(curves, spans, disp_neur):
     print("Calcualting coordinates of nodes...")
     node_coords = []
 
-    # limit max number of nodes per neuron
-    if number_of_nodes > 49:
-        number_of_nodes = 49
+    with open('C:\\Users\\Rafael\\Documents\\GitHub\\Neuron_visualization_CI\\compartmentlengths_mm.pkl') as comp_lens:
 
-    # iterate through every neuron
-    for i in range(len(disp_neur)):
-        # calculate node positions on the curve
-        node_params = np.linspace(0, spans[i], num=number_of_nodes)
-        node_coords.append([])
+        # iterate through every neuron
+        for i in range(len(disp_neur)):
 
-        # iterate through every node
-        for j in range(number_of_nodes):
-            current_coords = cmds.pointOnCurve(curves[i], pr=node_params[j], p=True)
-            node_coords[i].append(current_coords)
+            #calculate number of compartments
+            curve_len = cmds.arclen(curves[i])
+            compare_len = 0
+            k = 0
+            while compare_len < curve_len:
+                compare_len += comp_lens[k]
+                k += 1
+
+            # calculate node positions on the curve
+            #node_params = np.linspace(0, spans[i], num=number_of_nodes)
+
+            node_coords.append([])
+
+            # iterate through every node
+            for j in range(k):
+
+                #calculate node by relativity
+                relativ = comp_lens[j] / compare_len
+                node_param = relativ * spans[i]
+
+                current_coords = cmds.pointOnCurve(curves[i], pr=node_param, p=True)
+                node_coords[i].append(current_coords)
 
     return node_coords
 
@@ -245,15 +258,14 @@ def create_frames(shader, measurements, disp_neur):
 
 
 def main():
-    number_of_nodes = 49
-    disp_neur = range(239, 241)   #display neuron from ... to ...
+    disp_neur = range(239, 240)   #display neuron from ... to ...
     frame_creation = "yes"
 
     vertices = import_neuron_coordinates()
     measurements = import_voltage_traces()
 
     curves, spans = create_curves(vertices, disp_neur)
-    node_coords = calculate_node_coords(number_of_nodes, curves, spans, disp_neur)
+    node_coords = calculate_node_coords(curves, spans, disp_neur)
     nodes, shader = create_nodes(node_coords, disp_neur)
     if frame_creation == "yes":
         create_frames(shader, measurements, disp_neur)
