@@ -12,6 +12,8 @@ import maya.mel as mel
 
 # Global Variables
 
+
+
 #coords_filepath = "C:\\Users\\Rafael\\Desktop\\praktikum bioanaloge\\ci_refine_list_mdl\\ci_refine_list_mdl.pkl"
 coords_filepath = "C:\\Users\\Erik\\Documents\\Elektrotechnik\\Master\\SS2022\\Projektpraktikum\\ci_refine_list_mdl.pkl"
 #measurements_filepath = "C:\\Users\\Rafael\\Desktop\\praktikum bioanaloge\\projektpraktikum_animation_ss2022\\Rattay_2013_e7_o2.0_0.001000149883801424A.p"
@@ -157,7 +159,7 @@ def create_curves(vertices, disp_neur):
 
     return curves, spans
 
-
+'''
 def calculate_node_coords(number_of_nodes, curves, spans, disp_neur):
     # that is how the node coordinates are created. here the mapping regarding the compartments should take place
     print("Calcualting coordinates of nodes...")
@@ -179,7 +181,41 @@ def calculate_node_coords(number_of_nodes, curves, spans, disp_neur):
             node_coords[i].append(current_coords)
 
     return node_coords
+'''
+def geometry(x_dist, y_dist, z_dist, distance, pos1, restcomp_len):
+    ratio = restcomp_len/distance
+    pos1[0] = pos1[0] + ratio * x_dist
+    pos1[1] = pos1[1] + ratio * y_dist
+    pos1[2] = pos1[2] + ratio * z_dist
+    geometry_point = []
+    geometry_point.append(pos1[0])
+    geometry_point.append(pos1[1])
+    geometry_point.append(pos1[2])
+    rest_distance = distance - restcomp_len
 
+    return geometry_point, rest_distance
+
+def calculate_node_coords()
+vertices = pd.read_pickle(_main_.coords_filepath)
+comp_coords=[]
+with open('compartmentlengths_mm.pkl', 'rb') as compartment_lengths:
+k=0
+for i in range(0, len(vertices)-1): # from neuron 0 to 399
+    comp_coords.append([])
+    for eachPos in vertices[i][:]:
+        x_dist = (vertices[i + 1][eachPos[0]] - vertices[i][eachPos[0]])
+        y_dist = (vertices[i + 1][eachPos[1]] - vertices[i][eachPos[1]])
+        z_dist = (vertices[i + 1][eachPos[2]] - vertices[i][eachPos[2]])
+        distance = math.sqrt(x_dist**2 + y_dist**2 + z_dist**2)
+        if  compartment_lengths[k] <= distance:
+            while compartment_lengths[k] <= distance:
+                geometry_point, rest_distance = geometry(x_dist, y_dist, z_dist, distance, vertices[i][eachPos], compartment_lengths[k])
+                comp_coords[i].append(geometry_point)
+                k += 1
+                distance = rest_distance
+            compartment_lengths[k] = compartment_lengths[k] - distance
+        else:
+            compartment_lengths[k] = compartment_lengths[k] - distance
 
 def create_nodes(node_coords, disp_neur, material_name):
     print("creating nodes...")
