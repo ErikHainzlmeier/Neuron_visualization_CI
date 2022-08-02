@@ -161,33 +161,35 @@ def calculate_node_coords(curves, spans, disp_neur):
     print("Calcualting coordinates of nodes...")
     node_coords = []
 
-    with open('C:\\Users\\Rafael\\Documents\\GitHub\\Neuron_visualization_CI\\compartmentlengths_mm.pkl') as comp_lens:
+    comp_lens = pd.read_pickle('C:\\Users\\Rafael\\Documents\\GitHub\\Neuron_visualization_CI\\compartmentlengths_mm.pkl')
+    # iterate through every neuron
+    for i in range(len(disp_neur)):
 
-        # iterate through every neuron
-        for i in range(len(disp_neur)):
+        #calculate number of compartments
+        curve_len = cmds.arclen(curves[i])
+        compare_len = 0
+        k = 0
+        while compare_len < curve_len:
+            compare_len += comp_lens[k]
+            k += 1
+        #print("\n\n\n\nCurve length:", curve_len, "\nNumber of Compartments:", k, "\nStacked compartment length:", compare_len, "\n\n")
 
-            #calculate number of compartments
-            curve_len = cmds.arclen(curves[i])
-            compare_len = 0
-            k = 0
-            while compare_len < curve_len:
-                compare_len += comp_lens[k]
-                k += 1
+        node_coords.append([])
+        span_param = 0
 
-            # calculate node positions on the curve
-            #node_params = np.linspace(0, spans[i], num=number_of_nodes)
+        # iterate through every node
+        for j in range(k):
+            #calculate node by relativity
+            relativ = comp_lens[j] / compare_len
+            span_param = min(spans[i], span_param + relativ * spans[i])
+            
+            current_coords = cmds.pointOnCurve(curves[i], pr=span_param, p=True)
+            node_coords[i].append(current_coords)
 
-            node_coords.append([])
-
-            # iterate through every node
-            for j in range(k):
-
-                #calculate node by relativity
-                relativ = comp_lens[j] / compare_len
-                node_param = relativ * spans[i]
-
-                current_coords = cmds.pointOnCurve(curves[i], pr=node_param, p=True)
-                node_coords[i].append(current_coords)
+            # print("Compartment:", j, "of", k)
+            # print("Compartment length:", comp_lens[j], "/ compare length:", compare_len, "=", relativ)
+            # print("spans[", i, "]:", spans[i], "span_param:", span_param)
+            # print("current coords:", current_coords, "\n\n")
 
     return node_coords
 
