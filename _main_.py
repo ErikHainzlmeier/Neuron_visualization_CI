@@ -159,29 +159,43 @@ def create_curves(vertices, disp_neur):
 
     return curves, spans
 
-'''
-def calculate_node_coords(number_of_nodes, curves, spans, disp_neur):
-    # that is how the node coordinates are created. here the mapping regarding the compartments should take place
+
+def calculate_node_coords(curves, spans, disp_neur):
     print("Calcualting coordinates of nodes...")
     node_coords = []
 
-    # limit max number of nodes per neuron
-    if number_of_nodes > 49:
-        number_of_nodes = 49
-
+    comp_lens = pd.read_pickle('C:\\Users\\Rafael\\Documents\\GitHub\\Neuron_visualization_CI\\compartmentlengths_mm.pkl')
     # iterate through every neuron
     for i in range(len(disp_neur)):
-        # calculate node positions on the curve
-        node_params = np.linspace(0, spans[i], num=number_of_nodes)
+
+        #calculate number of compartments
+        curve_len = cmds.arclen(curves[i])
+        compare_len = 0
+        k = 0
+        while compare_len < curve_len:
+            compare_len += comp_lens[k]
+            k += 1
+        #print("\n\n\n\nCurve length:", curve_len, "\nNumber of Compartments:", k, "\nStacked compartment length:", compare_len, "\n\n")
+
         node_coords.append([])
+        span_param = 0
 
         # iterate through every node
-        for j in range(number_of_nodes):
-            current_coords = cmds.pointOnCurve(curves[i], pr=node_params[j], p=True)
+        for j in range(k):
+            #calculate node by relativity
+            relativ = comp_lens[j] / compare_len
+            span_param = min(spans[i], span_param + relativ * spans[i])
+            
+            current_coords = cmds.pointOnCurve(curves[i], pr=span_param, p=True)
             node_coords[i].append(current_coords)
 
+            # print("Compartment:", j, "of", k)
+            # print("Compartment length:", comp_lens[j], "/ compare length:", compare_len, "=", relativ)
+            # print("spans[", i, "]:", spans[i], "span_param:", span_param)
+            # print("current coords:", current_coords, "\n\n")
+
     return node_coords
-'''
+
 
 
 def create_nodes(node_coords, disp_neur, material_name):
@@ -278,10 +292,11 @@ def main():
     measurements = import_voltage_traces()
 
     curves, spans = create_curves(vertices, disp_neur)
-    node_coords = calculate_node_coords(number_of_nodes, curves, spans, disp_neur)
+    node_coords = calculate_node_coords(curves, spans, disp_neur)
     nodes, shader = create_nodes(node_coords, disp_neur, material_name)
     if creation_frames == "yes":
         create_frames(shader, measurements, disp_neur, frame_divider)
+    
 
     print("finished :)")
 
