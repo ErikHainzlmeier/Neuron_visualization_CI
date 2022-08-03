@@ -185,8 +185,11 @@ def calculate_node_coords(curves, spans, disp_neur):
             #calculate node by relativity
             relativ = comp_lens[j] / compare_len
             span_param = min(spans[i], span_param + relativ * spans[i])
-            
+
+            if j>0 and j<k:
+                span_param = (span_param[j-1] + span_param[j]) / 2
             current_coords = cmds.pointOnCurve(curves[i], pr=span_param, p=True)
+
             node_coords[i].append(current_coords)
 
             # print("Compartment:", j, "of", k)
