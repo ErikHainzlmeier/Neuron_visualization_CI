@@ -13,11 +13,12 @@ import maya.mel as mel
 # Global Variables
 
 
+coords_filepath = "C:\\Users\\Rafael\\Desktop\\praktikum bioanaloge\\ci_refine_list_mdl\\ci_refine_list_mdl.pkl"
+# coords_filepath = "C:\\Users\\Erik\\Documents\\Elektrotechnik\\Master\\SS2022\\Projektpraktikum\\ci_refine_list_mdl.pkl"
+measurements_filepath = "C:\\Users\\Rafael\\Desktop\\praktikum bioanaloge\\projektpraktikum_animation_ss2022\\Rattay_2013_e7_o2.0_0.001000149883801424A.p"
 
-#coords_filepath = "C:\\Users\\Rafael\\Desktop\\praktikum bioanaloge\\ci_refine_list_mdl\\ci_refine_list_mdl.pkl"
-coords_filepath = "C:\\Users\\Erik\\Documents\\Elektrotechnik\\Master\\SS2022\\Projektpraktikum\\ci_refine_list_mdl.pkl"
-#measurements_filepath = "C:\\Users\\Rafael\\Desktop\\praktikum bioanaloge\\projektpraktikum_animation_ss2022\\Rattay_2013_e7_o2.0_0.001000149883801424A.p"
-measurements_filepath = "C:\\Users\\Erik\\Documents\\Elektrotechnik\\Master\\SS2022\\Projektpraktikum\\projektpraktikum_animation_ss2022\\projektpraktikum_animation_ss2022\\Rattay_2013_e7_o2.0_0.001000149883801424A.p"
+
+# measurements_filepath = "C:\\Users\\Erik\\Documents\\Elektrotechnik\\Master\\SS2022\\Projektpraktikum\\projektpraktikum_animation_ss2022\\projektpraktikum_animation_ss2022\\Rattay_2013_e7_o2.0_0.001000149883801424A.p"
 
 
 def unflatten_nlist(l):
@@ -104,7 +105,6 @@ def import_neuron_coordinates():
     # coordinates for the neuron paths
     # list of 400 elements of variable length x 3 matrix
 
-
     vertices = []
     for i in range(0, 400, 1):
         vertices.append(om.MPointArray())
@@ -123,7 +123,7 @@ def import_neuron_coordinates():
         # else:
 
         # create a curve for every neuron following along the vertices
-        #cmds.curve(pw=vertices)
+        # cmds.curve(pw=vertices)
 
     '''
         obj = pd.read_pickle(coords_filepath)
@@ -164,31 +164,36 @@ def calculate_node_coords(curves, spans, disp_neur):
     print("Calcualting coordinates of nodes...")
     node_coords = []
 
-    comp_lens = pd.read_pickle('C:\\Users\\Rafael\\Documents\\GitHub\\Neuron_visualization_CI\\compartmentlengths_mm.pkl')
+    comp_lens = pd.read_pickle(
+        'C:\\Users\\Rafael\\Documents\\GitHub\\Neuron_visualization_CI\\compartmentlengths_mm.pkl')
     # iterate through every neuron
     for i in range(len(disp_neur)):
 
-        #calculate number of compartments
+        # calculate number of compartments
         curve_len = cmds.arclen(curves[i])
         compare_len = 0
         k = 0
         while compare_len < curve_len:
             compare_len += comp_lens[k]
             k += 1
-        #print("\n\n\n\nCurve length:", curve_len, "\nNumber of Compartments:", k, "\nStacked compartment length:", compare_len, "\n\n")
+        # print("\n\n\n\nCurve length:", curve_len, "\nNumber of Compartments:", k, "\nStacked compartment length:", compare_len, "\n\n")
 
         node_coords.append([])
         span_param = 0
+        inter_span = 0
 
         # iterate through every node
         for j in range(k):
-            #calculate node by relativity
+            # calculate node by relativity
             relativ = comp_lens[j] / compare_len
+            pre_span = span_param
             span_param = min(spans[i], span_param + relativ * spans[i])
 
-            if j>0 and j<k:
-                span_param = (span_param[j-1] + span_param[j]) / 2
-            current_coords = cmds.pointOnCurve(curves[i], pr=span_param, p=True)
+            if j > 0 and j < k - 1:
+                inter_span = (pre_span + span_param) * 0.5
+            else:
+                inter_span = span_param
+            current_coords = cmds.pointOnCurve(curves[i], pr=inter_span, p=True)
 
             node_coords[i].append(current_coords)
 
@@ -198,7 +203,6 @@ def calculate_node_coords(curves, spans, disp_neur):
             # print("current coords:", current_coords, "\n\n")
 
     return node_coords
-
 
 
 def create_nodes(node_coords, disp_neur, material_name):
@@ -213,36 +217,39 @@ def create_nodes(node_coords, disp_neur, material_name):
         node.append([])  # Neues Neuron erstellen
         shader.append([])
         current_group = cmds.group(em=True, name='neuron' + str(i), parent='nodes')
-        #print("Iterating neuron", i, ":", len(node_coords))
+        # print("Iterating neuron", i, ":", len(node_coords))
         # iterate through nodes
         for j in range(len(node_coords[i])):
             print("Node creation... Neuron", disp_neur[i], "Node", j)
-            #current_node = cmds.polySphere(r=node_size, name='mySphere#', sx=5, sy=5)
-            current_node = cmds.sphere(r=node_size, s=4, name='mySphere#') # output of current_node is i.e ['mySphere1', 'makeNurbSphere1']
+            # current_node = cmds.polySphere(r=node_size, name='mySphere#', sx=5, sy=5)
+            current_node = cmds.sphere(r=node_size, s=4,
+                                       name='mySphere#')  # output of current_node is i.e ['mySphere1', 'makeNurbSphere1']
             node[i].append(current_node)
-            cmds.parent(node[i][j][0], current_group) # here we have to reference to the first entry of current_node, otherwise parenting can not happen
+            cmds.parent(node[i][j][0],
+                        current_group)  # here we have to reference to the first entry of current_node, otherwise parenting can not happen
 
             cmds.move(node_coords[i][j][0], node_coords[i][j][1], node_coords[i][j][2])
 
-
             # create new shader and assign a color to it
             current_shader, shading_Group = applyMaterial(current_node[0], material_name)
-            #current_shader = cmds.shadingNode('standardSurface', asShader=1, name='Shader#')
-            #cmds.setAttr((current_shader + '.baseColor'), 1, 1, 1, type='double3')
+            # current_shader = cmds.shadingNode('standardSurface', asShader=1, name='Shader#')
+            # cmds.setAttr((current_shader + '.baseColor'), 1, 1, 1, type='double3')
             shader[i].append(current_shader)
             cmds.sets(current_node[0], forceElement=shading_Group)
-            #cmds.select(current_node[0])
-            #cmds.hyperShade(a=current_shader)
+            # cmds.select(current_node[0])
+            # cmds.hyperShade(a=current_shader)
 
     return node, shader
 
-def applyMaterial(node, material_name): #
-    if cmds.objExists(node): # create a shader with material_name & shading group node named for the object
+
+def applyMaterial(node, material_name):  #
+    if cmds.objExists(node):  # create a shader with material_name & shading group node named for the object
         shd = cmds.shadingNode(material_name, name="%s_shader" % node, asShader=True)
         shdSG = cmds.sets(name='%sSG' % shd, empty=True, renderable=True, noSurfaceShader=True)
         cmds.connectAttr('%s.outColor' % shd, '%s.surfaceShader' % shdSG)
-        #cmds.sets(node, empty=True, forceElement=shdSG)
+        # cmds.sets(node, empty=True, forceElement=shdSG)
         return shd, shdSG
+
 
 def create_frames(shader, measurements, disp_neur, frame_divider):
     print("creating frames...")
@@ -254,19 +261,25 @@ def create_frames(shader, measurements, disp_neur, frame_divider):
             # iterate through all measurement steps
             max_v = max(measurements[i][j])
             min_v = min(measurements[i][j])
-            threshold = min_v + 0.09 * (max_v - min_v)
-            pre_threshold = min_v + 0.06 * (max_v - min_v)
-            #post_threshold = min_v + 0.65 * (max_v - min_v)
+            change_threshold = abs(0.0001 * (max_v - min_v))
+            threshold = min_v + 0.010 * (max_v - min_v)
+            above_threshold_before = 0
+            temp_voltage = 0
+
             # go through all neurons and compartments
-            for k in range(0, len(measurements[i][j]), frame_divider): # frame divider for example only sets every 10th measurement as a keyframe
-                if measurements[i][j][k] > threshold:
+            for k in range(0, len(measurements[i][j]),
+                           frame_divider):  # frame divider for example only sets every 10th measurement as a keyframe
+                if measurements[i][j][k] > threshold and abs(measurements[i][j][k] - temp_voltage) > change_threshold:
+                    temp_voltage = measurements[i][j][k]
+                    above_threshold_before = 1
                     red = 1
-                    green = min(1, 1 - 20 * measurements[disp_neur[i]][j][k])
-                    blue = min(1, 1 - 20 * measurements[disp_neur[i]][j][k])
+                    green = min(1, 1.5 - 40 * measurements[disp_neur[i]][j][k])
+                    blue = min(1, 1 - 40 * measurements[disp_neur[i]][j][k])
                     cmds.setKeyframe(shader[i][j], time=k, attribute='baseColorR', value=red)
                     cmds.setKeyframe(shader[i][j], time=k, attribute='baseColorG', value=green)
                     cmds.setKeyframe(shader[i][j], time=k, attribute='baseColorB', value=blue)
-                elif measurements[i][j][k] > pre_threshold and measurements[i][j][k] < threshold:
+                elif measurements[i][j][k] < threshold and above_threshold_before == 1:
+                    above_threshold_before = 0
                     red = 1
                     green = 1
                     blue = 1
@@ -275,21 +288,20 @@ def create_frames(shader, measurements, disp_neur, frame_divider):
                     cmds.setKeyframe(shader[i][j], time=k, attribute='baseColorB', value=blue)
 
 
-
 def main():
     ## cleaning the scene and all unused objects before creating new ones
     cmds.select(all=True)
     mySel = cmds.ls(sl=1)
-    if len(mySel) != 0: # my current selection
+    if len(mySel) != 0:  # my current selection
         cmds.cutKey(mySel, s=True)  # delete key command
         cmds.delete()
         mel.eval('hyperShadePanelMenuCommand("hyperShadePanel1", "deleteUnusedNodes");')
     ###################################################
     number_of_nodes = 50
     frame_divider = 10
-    disp_neur = range(239, 241)   #display neuron from ... to ...
+    disp_neur = range(239, 241)  # display neuron from ... to ...
     creation_frames = "yes"
-    material_name='standardSurface'
+    material_name = 'standardSurface'
 
     vertices = import_neuron_coordinates()
     measurements = import_voltage_traces()
@@ -299,9 +311,9 @@ def main():
     nodes, shader = create_nodes(node_coords, disp_neur, material_name)
     if creation_frames == "yes":
         create_frames(shader, measurements, disp_neur, frame_divider)
-    
 
     print("finished :)")
+
 
 if __name__ == "__main__":
     main()
