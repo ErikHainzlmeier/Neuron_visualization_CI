@@ -184,11 +184,14 @@ def calculate_node_coords(curves, spans, disp_neur):
         for j in range(k):
             #calculate node by relativity
             relativ = comp_lens[j] / compare_len
+            pre_span = span_param
             span_param = min(spans[i], span_param + relativ * spans[i])
 
-            if j>0 and j<k:
-                span_param = (span_param[j-1] + span_param[j]) / 2
-            current_coords = cmds.pointOnCurve(curves[i], pr=span_param, p=True)
+            if j > 0 and j < k - 1:
+                inter_span = (pre_span + span_param) * 0.5
+            else:
+                inter_span = span_param
+            current_coords = cmds.pointOnCurve(curves[i], pr=inter_span, p=True)
 
             node_coords[i].append(current_coords)
 
@@ -252,21 +255,29 @@ def create_frames(shader, measurements, disp_neur, frame_divider):
         for j in range(len(shader[i])):
             print("Frame creation... Neuron", disp_neur[i], "Node", j)
             # iterate through all measurement steps
-            max_v = max(measurements[i][j])
-            min_v = min(measurements[i][j])
-            threshold = min_v + 0.09 * (max_v - min_v)
-            pre_threshold = min_v + 0.06 * (max_v - min_v)
-            #post_threshold = min_v + 0.65 * (max_v - min_v)
+            max_v = np.amax(measurements[i])
+            rest_v = measurements[i][j][-1]
+            '''
+            Der Peak ist eigentlich bei 0.0395 (im Positiven Bereich), aber das erkennt das Programm nicht... 
+            DAS ist auch das ganze Problem! das max_v funktioniert nicht! Entsprechend sind ALLE Messpunkte über dem Threshold
+            Und dadurch wird für JEDEN Knoten, JEDER keyframe gesetzt. Und es wir langsam....
+            Threshold ist auch das Problem bei den beiden Knoten, die garnicht animiert werden....
+            Wenn du in nem seperaten Program die measurements importierst, und nach dem Maximum suchst, funktionierts.
+            Kannst du das auch mal versuchen?
+            '''
+            threshold = rest_v + 0.01 * abs(max_v - rest_v)
+            print("Node", j, "resting potential:", rest_v, "voltage peak:", max_v, "threshold:", threshold)
+
             # go through all neurons and compartments
             for k in range(0, len(measurements[i][j]), frame_divider): # frame divider for example only sets every 10th measurement as a keyframe
                 if measurements[i][j][k] > threshold:
                     red = 1
-                    green = min(1, 1 - 20 * measurements[disp_neur[i]][j][k])
-                    blue = min(1, 1 - 20 * measurements[disp_neur[i]][j][k])
+                    green = min(1, 1.3 - 30 * measurements[disp_neur[i]][j][k])
+                    blue = min(1, 1 - 30 * measurements[disp_neur[i]][j][k])
                     cmds.setKeyframe(shader[i][j], time=k, attribute='baseColorR', value=red)
                     cmds.setKeyframe(shader[i][j], time=k, attribute='baseColorG', value=green)
                     cmds.setKeyframe(shader[i][j], time=k, attribute='baseColorB', value=blue)
-                elif measurements[i][j][k] > pre_threshold and measurements[i][j][k] < threshold:
+                elif measurements[i][j][k] < threshold:
                     red = 1
                     green = 1
                     blue = 1
@@ -287,7 +298,7 @@ def main():
     ###################################################
     number_of_nodes = 50
     frame_divider = 10
-    disp_neur = range(239, 241)   #display neuron from ... to ...
+    disp_neur = range(239, 240)   #display neuron from ... to ...
     creation_frames = "yes"
     material_name='standardSurface'
 
