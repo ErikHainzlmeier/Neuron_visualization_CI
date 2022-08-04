@@ -275,6 +275,8 @@ def create_frames(shader, measurements, disp_neur, frame_divider):
                     red = 1
                     green = min(1, 1.5 - 40 * measurements[disp_neur[i]][j][k])
                     blue = min(1, 1 - 40 * measurements[disp_neur[i]][j][k])
+
+                    cmds.setKeyframe(node[i][j], time=k, attribute='visibility', value=1)
                     cmds.setKeyframe(shader[i][j], time=k, attribute='baseColorR', value=red)
                     cmds.setKeyframe(shader[i][j], time=k, attribute='baseColorG', value=green)
                     cmds.setKeyframe(shader[i][j], time=k, attribute='baseColorB', value=blue)
@@ -283,6 +285,7 @@ def create_frames(shader, measurements, disp_neur, frame_divider):
                     red = 1
                     green = 1
                     blue = 1
+                    cmds.setKeyframe(node[i][j], time=k, attribute='visibility', value=0)
                     cmds.setKeyframe(shader[i][j], time=k, attribute='baseColorR', value=red)
                     cmds.setKeyframe(shader[i][j], time=k, attribute='baseColorG', value=green)
                     cmds.setKeyframe(shader[i][j], time=k, attribute='baseColorB', value=blue)
