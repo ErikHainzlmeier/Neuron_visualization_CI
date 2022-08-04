@@ -183,13 +183,16 @@ def calculate_node_coords(curves, spans, disp_neur):
         # iterate through every node
         for j in range(k):
             #calculate node by relativity
+
             relativ = comp_lens[j] / compare_len
+            pre_span = span_param
             span_param = min(spans[i], span_param + relativ * spans[i])
 
-            if j>0 and j<k:
-                span_param = (span_param[j-1] + span_param[j]) / 2
-            current_coords = cmds.pointOnCurve(curves[i], pr=span_param, p=True)
-
+            if j > 0 and j < k - 1:
+                inter_span = (pre_span + span_param) * 0.5
+            else:
+                inter_span = span_param
+            current_coords = cmds.pointOnCurve(curves[i], pr=inter_span, p=True)
             node_coords[i].append(current_coords)
 
             # print("Compartment:", j, "of", k)
