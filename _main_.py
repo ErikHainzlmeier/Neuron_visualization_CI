@@ -9,15 +9,16 @@ import operator
 import maya.api.OpenMaya as om
 import maya.cmds as cmds
 import maya.mel as mel
+import pdb
 
 # Global Variables
 
 
 
-#coords_filepath = "C:\\Users\\Rafael\\Desktop\\praktikum bioanaloge\\ci_refine_list_mdl\\ci_refine_list_mdl.pkl"
-coords_filepath = "C:\\Users\\Erik\\Documents\\Elektrotechnik\\Master\\SS2022\\Projektpraktikum\\ci_refine_list_mdl.pkl"
-#measurements_filepath = "C:\\Users\\Rafael\\Desktop\\praktikum bioanaloge\\projektpraktikum_animation_ss2022\\Rattay_2013_e7_o2.0_0.001000149883801424A.p"
-measurements_filepath = "C:\\Users\\Erik\\Documents\\Elektrotechnik\\Master\\SS2022\\Projektpraktikum\\projektpraktikum_animation_ss2022\\projektpraktikum_animation_ss2022\\Rattay_2013_e7_o2.0_0.001000149883801424A.p"
+coords_filepath = "C:\\Users\\Rafael\\Desktop\\praktikum bioanaloge\\ci_refine_list_mdl\\ci_refine_list_mdl.pkl"
+#coords_filepath = "C:\\Users\\Erik\\Documents\\Elektrotechnik\\Master\\SS2022\\Projektpraktikum\\ci_refine_list_mdl.pkl"
+measurements_filepath = "C:\\Users\\Rafael\\Desktop\\praktikum bioanaloge\\projektpraktikum_animation_ss2022\\Rattay_2013_e7_o2.0_0.001000149883801424A.p"
+#measurements_filepath = "C:\\Users\\Erik\\Documents\\Elektrotechnik\\Master\\SS2022\\Projektpraktikum\\projektpraktikum_animation_ss2022\\projektpraktikum_animation_ss2022\\Rattay_2013_e7_o2.0_0.001000149883801424A.p"
 
 
 def unflatten_nlist(l):
@@ -250,34 +251,29 @@ def applyMaterial(node, material_name): #
 def create_frames(shader, measurements, disp_neur, frame_divider):
     print("creating frames...")
     # iterate through all neurons
+
     for i in range(len(disp_neur)):
         # iterate through all nodes
         for j in range(len(shader[i])):
             print("Frame creation... Neuron", disp_neur[i], "Node", j)
             # iterate through all measurement steps
-            max_v = np.amax(measurements[i])
+            #pdb.set_trace()
+            max_v = max(measurements[i][j])
             rest_v = measurements[i][j][-1]
-            '''
-            Der Peak ist eigentlich bei 0.0395 (im Positiven Bereich), aber das erkennt das Programm nicht... 
-            DAS ist auch das ganze Problem! das max_v funktioniert nicht! Entsprechend sind ALLE Messpunkte über dem Threshold
-            Und dadurch wird für JEDEN Knoten, JEDER keyframe gesetzt. Und es wir langsam....
-            Threshold ist auch das Problem bei den beiden Knoten, die garnicht animiert werden....
-            Wenn du in nem seperaten Program die measurements importierst, und nach dem Maximum suchst, funktionierts.
-            Kannst du das auch mal versuchen?
-            '''
-            threshold = rest_v + 0.01 * abs(max_v - rest_v)
+            threshold = rest_v + 0.50 * abs(max_v - rest_v)
             print("Node", j, "resting potential:", rest_v, "voltage peak:", max_v, "threshold:", threshold)
 
             # go through all neurons and compartments
             for k in range(0, len(measurements[i][j]), frame_divider): # frame divider for example only sets every 10th measurement as a keyframe
                 if measurements[i][j][k] > threshold:
                     red = 1
-                    green = min(1, 1.3 - 30 * measurements[disp_neur[i]][j][k])
-                    blue = min(1, 1 - 30 * measurements[disp_neur[i]][j][k])
+                    green = min(1.5, max(0, 1 - abs(20 * measurements[disp_neur[i]][j][k])))
+                    blue = min(1, max(0, 1 - abs(10 * measurements[disp_neur[i]][j][k])))
+                    #print("threshold exceeded, timestep:", k, "RGB:", red, green, blue)
                     cmds.setKeyframe(shader[i][j], time=k, attribute='baseColorR', value=red)
                     cmds.setKeyframe(shader[i][j], time=k, attribute='baseColorG', value=green)
                     cmds.setKeyframe(shader[i][j], time=k, attribute='baseColorB', value=blue)
-                elif measurements[i][j][k] < threshold:
+                elif measurements[i][j][k] <= threshold:
                     red = 1
                     green = 1
                     blue = 1
@@ -297,7 +293,7 @@ def main():
         mel.eval('hyperShadePanelMenuCommand("hyperShadePanel1", "deleteUnusedNodes");')
     ###################################################
     number_of_nodes = 50
-    frame_divider = 10
+    frame_divider = 1
     disp_neur = range(239, 240)   #display neuron from ... to ...
     creation_frames = "yes"
     material_name='standardSurface'
