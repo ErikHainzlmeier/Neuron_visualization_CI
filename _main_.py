@@ -249,7 +249,7 @@ def applyMaterial(node, material_name): #
         #cmds.sets(node, empty=True, forceElement=shdSG)
         return shd, shdSG
 
-def create_frames(shader, measurements, disp_neur, frame_divider):
+def create_frames(shader, measurements, node, disp_neur, frame_divider):
     print("creating frames...")
     # iterate through all neurons
     max_v = np.max(measurements)
@@ -280,7 +280,7 @@ def create_frames(shader, measurements, disp_neur, frame_divider):
                     cmds.setKeyframe(shader[i][j], time=k, attribute='baseColorB', value=blue)
                     cmds.setKeyframe(shader[i][j], time=k, attribute='baseColorR', value=red)
                     cmds.setKeyframe(shader[i][j], time=k, attribute='baseColorG', value=green)
-                    cmds.setKeyframe(shader[i][j], time=k, attribute='baseColorB', value=blue)
+                    cmds.setKeyframe(node[i][j], time=k, attribute='visibility', value=1)
 
                 elif measurements[i][j][k] <= threshold and toggle == 1:
                     red = 1
@@ -289,7 +289,7 @@ def create_frames(shader, measurements, disp_neur, frame_divider):
                     cmds.setKeyframe(shader[i][j], time=k, attribute='baseColorR', value=red)
                     cmds.setKeyframe(shader[i][j], time=k, attribute='baseColorG', value=green)
                     cmds.setKeyframe(shader[i][j], time=k, attribute='baseColorB', value=blue)
-                    cmds.setKeyframe(shader[i][j], time=k, attribute='baseColorB', value=blue)
+                    cmds.setKeyframe(node[i][j], time=k, attribute='visibility', value=0)
                     toggle = 0
 
 
@@ -305,7 +305,7 @@ def main():
         mel.eval('hyperShadePanelMenuCommand("hyperShadePanel1", "deleteUnusedNodes");')
     ###################################################
     number_of_nodes = 50
-    frame_divider = 1
+    frame_divider = 5
     disp_neur = range(239, 240)   #display neuron from ... to ...
     creation_frames = "yes"
     material_name='standardSurface'
@@ -317,7 +317,7 @@ def main():
     node_coords = calculate_node_coords(curves, spans, disp_neur)
     nodes, shader = create_nodes(node_coords, disp_neur, material_name)
     if creation_frames == "yes":
-        create_frames(shader, measurements, disp_neur, frame_divider)
+        create_frames(shader, measurements, nodes, disp_neur, frame_divider)
     
 
     print("finished :)")
