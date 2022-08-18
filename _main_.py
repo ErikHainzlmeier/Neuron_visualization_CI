@@ -15,10 +15,10 @@ import pdb
 
 
 
-coords_filepath = "C:\\Users\\Rafael\\Desktop\\praktikum bioanaloge\\ci_refine_list_mdl\\ci_refine_list_mdl.pkl"
-#coords_filepath = "C:\\Users\\Erik\\Documents\\Elektrotechnik\\Master\\SS2022\\Projektpraktikum\\ci_refine_list_mdl.pkl"
-measurements_filepath = "C:\\Users\\Rafael\\Desktop\\praktikum bioanaloge\\projektpraktikum_animation_ss2022\\Rattay_2013_e7_o2.0_0.001000149883801424A.p"
-#measurements_filepath = "C:\\Users\\Erik\\Documents\\Elektrotechnik\\Master\\SS2022\\Projektpraktikum\\projektpraktikum_animation_ss2022\\projektpraktikum_animation_ss2022\\Rattay_2013_e7_o2.0_0.001000149883801424A.p"
+#coords_filepath = "C:\\Users\\Rafael\\Desktop\\praktikum bioanaloge\\ci_refine_list_mdl\\ci_refine_list_mdl.pkl"
+coords_filepath = "C:\\Users\\Erik\\Documents\\Elektrotechnik\\Master\\SS2022\\Projektpraktikum\\ci_refine_list_mdl.pkl"
+#measurements_filepath = "C:\\Users\\Rafael\\Desktop\\praktikum bioanaloge\\projektpraktikum_animation_ss2022\\Rattay_2013_e7_o2.0_0.001000149883801424A.p"
+measurements_filepath = "C:\\Users\\Erik\\Documents\\Elektrotechnik\\Master\\SS2022\\Projektpraktikum\\projektpraktikum_animation_ss2022\\projektpraktikum_animation_ss2022\\Rattay_2013_e7_o2.0_0.001000149883801424A.p"
 
 
 def unflatten_nlist(l):
@@ -165,7 +165,8 @@ def calculate_node_coords(curves, spans, disp_neur):
     print("Calcualting coordinates of nodes...")
     node_coords = []
 
-    comp_lens = pd.read_pickle('C:\\Users\\Rafael\\Documents\\GitHub\\Neuron_visualization_CI\\compartmentlengths_mm.pkl')
+    #comp_lens = pd.read_pickle('C:\\Users\\Rafael\\Documents\\GitHub\\Neuron_visualization_CI\\compartmentlengths_mm.pkl')
+    comp_lens = pd.read_pickle('C:\\Users\\Erik\\Documents\\Elektrotechnik\\Master\\SS2022\\Projektpraktikum\\Neuron_visualization_CI\\compartmentlengths_mm.pkl')
     # iterate through every neuron
     for i in range(len(disp_neur)):
 
@@ -251,35 +252,46 @@ def applyMaterial(node, material_name): #
 def create_frames(shader, measurements, disp_neur, frame_divider):
     print("creating frames...")
     # iterate through all neurons
+    max_v = np.max(measurements)
+    rest_v = measurements[0][0][-1]
+    threshold = rest_v + 0.8 * abs(max_v - rest_v)
+    print("threshold",threshold, "max value", max_v,"rest v", rest_v)
 
+    #threshold = -0.04
     for i in range(len(disp_neur)):
         # iterate through all nodes
         for j in range(len(shader[i])):
             print("Frame creation... Neuron", disp_neur[i], "Node", j)
             # iterate through all measurement steps
             #pdb.set_trace()
-            max_v = max(measurements[i][j])
-            rest_v = measurements[i][j][-1]
-            threshold = rest_v + 0.50 * abs(max_v - rest_v)
-            print("Node", j, "resting potential:", rest_v, "voltage peak:", max_v, "threshold:", threshold)
+            #max_v = max(measurements[disp_neur[i]][j])
 
+
+            #print("Node", j, "resting potential:", rest_v, "voltage peak:", max_v, "threshold:", threshold)
+            toggle = 1
             # go through all neurons and compartments
-            for k in range(0, len(measurements[i][j]), frame_divider): # frame divider for example only sets every 10th measurement as a keyframe
-                if measurements[i][j][k] > threshold:
+            for k in range(0, len(measurements[disp_neur[i]][j]), frame_divider): # frame divider for example only sets every 10th measurement as a keyframe
+                if measurements[disp_neur[i]][j][k] > threshold:
+                    toggle = 1
                     red = 1
-                    green = min(1.5, max(0, 1 - abs(20 * measurements[disp_neur[i]][j][k])))
-                    blue = min(1, max(0, 1 - abs(10 * measurements[disp_neur[i]][j][k])))
+                    green = min(1, max(0, 1.5 - abs(35 * measurements[disp_neur[i]][j][k])))
+                    blue = min(1, max(0, 1 - abs(25 * measurements[disp_neur[i]][j][k])))
                     #print("threshold exceeded, timestep:", k, "RGB:", red, green, blue)
+                    cmds.setKeyframe(shader[i][j], time=k, attribute='baseColorB', value=blue)
                     cmds.setKeyframe(shader[i][j], time=k, attribute='baseColorR', value=red)
                     cmds.setKeyframe(shader[i][j], time=k, attribute='baseColorG', value=green)
                     cmds.setKeyframe(shader[i][j], time=k, attribute='baseColorB', value=blue)
-                elif measurements[i][j][k] <= threshold:
+
+                elif measurements[i][j][k] <= threshold and toggle == 1:
                     red = 1
                     green = 1
                     blue = 1
                     cmds.setKeyframe(shader[i][j], time=k, attribute='baseColorR', value=red)
                     cmds.setKeyframe(shader[i][j], time=k, attribute='baseColorG', value=green)
                     cmds.setKeyframe(shader[i][j], time=k, attribute='baseColorB', value=blue)
+                    cmds.setKeyframe(shader[i][j], time=k, attribute='baseColorB', value=blue)
+                    toggle = 0
+
 
 
 
