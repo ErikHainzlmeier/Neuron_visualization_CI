@@ -9,7 +9,7 @@ import operator
 import maya.api.OpenMaya as om
 import maya.cmds as cmds
 import maya.mel as mel
-
+import pdb
 # Global Variables
 
 
@@ -250,32 +250,38 @@ def applyMaterial(node, material_name): #
 def create_frames(shader, measurements, disp_neur, frame_divider):
     print("creating frames...")
     # iterate through all neurons
+    max_v = np.max(measurements)
+    #pdb.set_trace()
+    threshold = 0 * max_v
     for i in range(len(disp_neur)):
         # iterate through all nodes
         for j in range(len(shader[i])):
             print("Frame creation... Neuron", disp_neur[i], "Node", j)
             # iterate through all measurement steps
-            max_v = max(measurements[i][j])
+
+            #max_v = max(measurements[i][j])
+            #pdb.run("print(measurements[i][j])")
             min_v = min(measurements[i][j])
-            threshold = min_v + 0.09 * (max_v - min_v)
-            pre_threshold = min_v + 0.06 * (max_v - min_v)
+
+            #pre_threshold = min_v + 0.06 * (max_v - min_v)
             #post_threshold = min_v + 0.65 * (max_v - min_v)
             # go through all neurons and compartments
-            for k in range(0, len(measurements[i][j]), frame_divider): # frame divider for example only sets every 10th measurement as a keyframe
-                if measurements[i][j][k] > threshold:
-                    red = 1
-                    green = min(1, 1 - 20 * measurements[disp_neur[i]][j][k])
-                    blue = min(1, 1 - 20 * measurements[disp_neur[i]][j][k])
-                    cmds.setKeyframe(shader[i][j], time=k, attribute='baseColorR', value=red)
-                    cmds.setKeyframe(shader[i][j], time=k, attribute='baseColorG', value=green)
-                    cmds.setKeyframe(shader[i][j], time=k, attribute='baseColorB', value=blue)
-                elif measurements[i][j][k] > pre_threshold and measurements[i][j][k] < threshold:
+            for k in range(0, len(measurements[i][j])): # frame divider for example only sets every 10th measurement as a keyframe
+                #if measurements[i][j][k] > threshold:
+                red = 1
+                green = min(1, 1 - 20 * measurements[disp_neur[i]][j][k])
+                blue = min(1, 1 - 20 * measurements[disp_neur[i]][j][k])
+                cmds.setKeyframe(shader[i][j], time=k, attribute='baseColorR', value=red)
+                cmds.setKeyframe(shader[i][j], time=k, attribute='baseColorG', value=green)
+                cmds.setKeyframe(shader[i][j], time=k, attribute='baseColorB', value=blue)
+                pdb.set_trace()
+                """elif measurements[i][j][k] > pre_threshold and measurements[i][j][k] < threshold:
                     red = 1
                     green = 1
                     blue = 1
                     cmds.setKeyframe(shader[i][j], time=k, attribute='baseColorR', value=red)
                     cmds.setKeyframe(shader[i][j], time=k, attribute='baseColorG', value=green)
-                    cmds.setKeyframe(shader[i][j], time=k, attribute='baseColorB', value=blue)
+                    cmds.setKeyframe(shader[i][j], time=k, attribute='baseColorB', value=blue)"""
 
 
 
