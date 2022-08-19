@@ -15,10 +15,10 @@ import pdb
 
 
 
-#coords_filepath = "C:\\Users\\Rafael\\Desktop\\praktikum bioanaloge\\ci_refine_list_mdl\\ci_refine_list_mdl.pkl"
-coords_filepath = "C:\\Users\\Erik\\Documents\\Elektrotechnik\\Master\\SS2022\\Projektpraktikum\\ci_refine_list_mdl.pkl"
-#measurements_filepath = "C:\\Users\\Rafael\\Desktop\\praktikum bioanaloge\\projektpraktikum_animation_ss2022\\Rattay_2013_e7_o2.0_0.001000149883801424A.p"
-measurements_filepath = "C:\\Users\\Erik\\Documents\\Elektrotechnik\\Master\\SS2022\\Projektpraktikum\\projektpraktikum_animation_ss2022\\projektpraktikum_animation_ss2022\\Rattay_2013_e7_o2.0_0.001000149883801424A.p"
+coords_filepath = "C:\\Users\\Rafael\\Desktop\\praktikum bioanaloge\\ci_refine_list_mdl\\ci_refine_list_mdl.pkl"
+#coords_filepath = "C:\\Users\\Erik\\Documents\\Elektrotechnik\\Master\\SS2022\\Projektpraktikum\\ci_refine_list_mdl.pkl"
+measurements_filepath = "C:\\Users\\Rafael\\Desktop\\praktikum bioanaloge\\projektpraktikum_animation_ss2022\\Rattay_2013_e7_o2.0_0.001000149883801424A.p"
+#measurements_filepath = "C:\\Users\\Erik\\Documents\\Elektrotechnik\\Master\\SS2022\\Projektpraktikum\\projektpraktikum_animation_ss2022\\projektpraktikum_animation_ss2022\\Rattay_2013_e7_o2.0_0.001000149883801424A.p"
 
 
 def unflatten_nlist(l):
@@ -161,12 +161,12 @@ def create_curves(vertices, disp_neur):
     return curves, spans
 
 
-def calculate_node_coords(curves, spans, disp_neur):
+def calculate_node_coords(curves, spans, disp_neur, only_nodes):
     print("Calcualting coordinates of nodes...")
     node_coords = []
 
-    #comp_lens = pd.read_pickle('C:\\Users\\Rafael\\Documents\\GitHub\\Neuron_visualization_CI\\compartmentlengths_mm.pkl')
-    comp_lens = pd.read_pickle('C:\\Users\\Erik\\Documents\\Elektrotechnik\\Master\\SS2022\\Projektpraktikum\\Neuron_visualization_CI\\compartmentlengths_mm.pkl')
+    comp_lens = pd.read_pickle('C:\\Users\\Rafael\\Documents\\GitHub\\Neuron_visualization_CI\\compartmentlengths_mm.pkl')
+    #comp_lens = pd.read_pickle('C:\\Users\\Erik\\Documents\\Elektrotechnik\\Master\\SS2022\\Projektpraktikum\\Neuron_visualization_CI\\compartmentlengths_mm.pkl')
     # iterate through every neuron
     for i in range(len(disp_neur)):
 
@@ -189,13 +189,19 @@ def calculate_node_coords(curves, spans, disp_neur):
             pre_span = span_param
             span_param = min(spans[i], span_param + relativ * spans[i])
 
-            if j > 0 and j < k - 1:
-                inter_span = (pre_span + span_param) * 0.5
-            else:
+            if j == 0:
                 inter_span = span_param
+            else:
+                inter_span = (pre_span + span_param) * 0.5 #Länge davor + Länge danach durch 2 ergibt die Mitte beider
+
             current_coords = cmds.pointOnCurve(curves[i], pr=inter_span, p=True)
 
-            node_coords[i].append(current_coords)
+
+            if only_nodes == 1:
+                if comp_lens[j] <= 0.1: #node of ranvier sind alle kleiner als 0.1mm, internodes alle größer
+                    node_coords[i].append(current_coords)
+            else:
+                node_coords[i].append(current_coords)
 
             # print("Compartment:", j, "of", k)
             # print("Compartment length:", comp_lens[j], "/ compare length:", compare_len, "=", relativ)
@@ -272,25 +278,28 @@ def create_frames(shader, measurements, node, disp_neur, frame_divider):
             # go through all neurons and compartments
             for k in range(0, len(measurements[disp_neur[i]][j]), frame_divider): # frame divider for example only sets every 10th measurement as a keyframe
                 if measurements[disp_neur[i]][j][k] > threshold:
-                    toggle = 1
-                    red = 1
-                    green = min(1, max(0, 1.5 - abs(35 * measurements[disp_neur[i]][j][k])))
-                    blue = min(1, max(0, 1 - abs(25 * measurements[disp_neur[i]][j][k])))
-                    #print("threshold exceeded, timestep:", k, "RGB:", red, green, blue)
+                    toggle += 1
+                    #red = 1
+                    green = min(1, max(0, 2 - abs(50 * measurements[disp_neur[i]][j][k])))
+                    blue = min(1, max(0, 1 - abs(50 * measurements[disp_neur[i]][j][k])))
+                    radius = min(0.03, -0.03 + abs(2 * measurements[disp_neur[i]][j][k]))
+                    print("masurement:", measurements[disp_neur[i]][j][k], "radius:", radius)
+                    #cmds.setKeyframe(shader[i][j], time=k, attribute='baseColorR', value=red)
                     cmds.setKeyframe(shader[i][j], time=k, attribute='baseColorB', value=blue)
-                    cmds.setKeyframe(shader[i][j], time=k, attribute='baseColorR', value=red)
                     cmds.setKeyframe(shader[i][j], time=k, attribute='baseColorG', value=green)
-                    cmds.setKeyframe(node[i][j], time=k, attribute='visibility', value=1)
-
-                elif measurements[i][j][k] <= threshold and toggle == 1:
-                    red = 1
+                    cmds.setKeyframe(node[i][j], time=k, attribute='radius', value=radius)
+                    if toggle == 1:
+                        cmds.setKeyframe(node[i][j], time=k, attribute='visibility', value=1)
+                elif measurements[i][j][k] <= threshold and toggle >= 1:
+                    toggle = 0
+                    #red = 1
                     green = 1
                     blue = 1
-                    cmds.setKeyframe(shader[i][j], time=k, attribute='baseColorR', value=red)
+                    #cmds.setKeyframe(shader[i][j], time=k, attribute='baseColorR', value=red)
                     cmds.setKeyframe(shader[i][j], time=k, attribute='baseColorG', value=green)
                     cmds.setKeyframe(shader[i][j], time=k, attribute='baseColorB', value=blue)
                     cmds.setKeyframe(node[i][j], time=k, attribute='visibility', value=0)
-                    toggle = 0
+
 
 
 
@@ -308,13 +317,14 @@ def main():
     frame_divider = 5
     disp_neur = range(239, 240)   #display neuron from ... to ...
     creation_frames = "yes"
-    material_name='standardSurface'
+    material_name='aiStandardSurface'
+    only_nodes = 0
 
     vertices = import_neuron_coordinates()
     measurements = import_voltage_traces()
 
     curves, spans = create_curves(vertices, disp_neur)
-    node_coords = calculate_node_coords(curves, spans, disp_neur)
+    node_coords = calculate_node_coords(curves, spans, disp_neur, only_nodes)
     nodes, shader = create_nodes(node_coords, disp_neur, material_name)
     if creation_frames == "yes":
         create_frames(shader, measurements, nodes, disp_neur, frame_divider)
