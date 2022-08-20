@@ -255,18 +255,6 @@ def applyMaterial(node, material_name): #
         #cmds.sets(node, empty=True, forceElement=shdSG)
         return shd, shdSG
 
-def radius_calculation(max_v, thr, m):
-    max_sphere_size = 0.03
-    min_sphere_size = 0.01
-    max_at_ratio = 0.3
-    max_at_ratio = 1 - max_at_ratio
-    c = max_v - max_at_ratio * (max_v - thr)
-    a = (max_sphere_size - min_sphere_size) / (c - thr)
-    b = max_sphere_size - a * c
-    radius = a * m + b
-    radius = min(max_sphere_size, max(min_sphere_size, radius))
-    return radius
-
 def create_frames(shader, measurements, node, disp_neur, frame_divider):
     print("creating frames...")
     # iterate through all neurons
@@ -287,30 +275,39 @@ def create_frames(shader, measurements, node, disp_neur, frame_divider):
 
             #print("Node", j, "resting potential:", rest_v, "voltage peak:", max_v, "threshold:", threshold)
             toggle = 1
-            pre_radius = 0
-            pre_blue = 0
-            pre_green = 0
-            new_keyframe_threshold = 0.1 #when colour value changes for more than this (percentage), new keyframe is set
+            radius = 0.01
             # go through all neurons and compartments
             for k in range(0, len(measurements[disp_neur[i]][j]), frame_divider): # frame divider for example only sets every 10th measurement as a keyframe
-                if measurements[disp_neur[i]][j][k] > threshold:
+                temp_meas = measurements[disp_neur[i]][j][k]
+                if temp_meas > threshold:
                     toggle += 1
+                    rel = (temp_meas - threshold) / (max_v - threshold)
+
                     green = min(1, max(0, 2 - abs(50 * measurements[disp_neur[i]][j][k])))
                     blue = min(1, max(0, 1 - abs(50 * measurements[disp_neur[i]][j][k])))
-                    radius = radius_calculation(max_v, threshold, measurements[disp_neur[i]][j][k])
-                    #print("pre_blue:", pre_blue, "blue:", blue, "thr:", abs(pre_blue - blue), ">", new_keyframe_threshold)
-                    if abs(pre_green - green) > new_keyframe_threshold or abs(pre_blue - blue) > new_keyframe_threshold:
-                        print("colour change: green:", pre_green, "->", green, "blue:", pre_blue, "->", blue)
-                        cmds.setKeyframe(shader[i][j], time=k, attribute='baseColorG', value=green)
-                        pre_green = green
-                        cmds.setKeyframe(shader[i][j], time=k, attribute='baseColorB', value=blue)
-                        pre_blue = blue
-                    if pre_radius != radius:
+
+
+                    if rel > 0.2 and radius < 0.03:
+                        radius = 0.03
                         cmds.setKeyframe(node[i][j], time=k, attribute='radius', value=radius)
-                        pre_radius = radius
+
+                    if rel > 0.5 and
+                    cmds.setKeyframe(shader[i][j], time=k, attribute='baseColorG', value=green)
+
+                    if rel
+                    cmds.setKeyframe(shader[i][j], time=k, attribute='baseColorB', value=blue)
+
+                    #cmds.setKeyframe(node[i][j], time=k, attribute='radius', value=radius)
+
                     if toggle == 1:
+                        green = 1
+                        blue = 1
+                        radius = 0.01
                         cmds.setKeyframe(node[i][j], time=k, attribute='visibility', value=1)
-                elif measurements[i][j][k] <= threshold and toggle >= 1:
+                        cmds.setKeyframe(shader[i][j], time=k, attribute='baseColorG', value=green)
+                        cmds.setKeyframe(shader[i][j], time=k, attribute='baseColorB', value=blue)
+                        cmds.setKeyframe(node[i][j], time=k, attribute='radius', value=radius)
+                elif toggle >= 1:
                     toggle = 0
                     green = 1
                     blue = 1
