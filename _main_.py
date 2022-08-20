@@ -298,12 +298,13 @@ def create_frames(shader, measurements, node, disp_neur, frame_divider):
                     green = min(1, max(0, 2 - abs(50 * measurements[disp_neur[i]][j][k])))
                     blue = min(1, max(0, 1 - abs(50 * measurements[disp_neur[i]][j][k])))
                     radius = radius_calculation(max_v, threshold, measurements[disp_neur[i]][j][k])
-                    if abs((pre_blue / (blue + 1e-7)) -1) > new_keyframe_threshold:
-                        cmds.setKeyframe(shader[i][j], time=k, attribute='baseColorB', value=blue)
-                        pre_blue = blue
-                    if abs((pre_green / (green + 1e-7)) -1) > new_keyframe_threshold:
+                    #print("pre_blue:", pre_blue, "blue:", blue, "thr:", abs(pre_blue - blue), ">", new_keyframe_threshold)
+                    if abs(pre_green - green) > new_keyframe_threshold or abs(pre_blue - blue) > new_keyframe_threshold:
+                        print("colour change: green:", pre_green, "->", green, "blue:", pre_blue, "->", blue)
                         cmds.setKeyframe(shader[i][j], time=k, attribute='baseColorG', value=green)
                         pre_green = green
+                        cmds.setKeyframe(shader[i][j], time=k, attribute='baseColorB', value=blue)
+                        pre_blue = blue
                     if pre_radius != radius:
                         cmds.setKeyframe(node[i][j], time=k, attribute='radius', value=radius)
                         pre_radius = radius
@@ -313,6 +314,8 @@ def create_frames(shader, measurements, node, disp_neur, frame_divider):
                     toggle = 0
                     green = 1
                     blue = 1
+                    red = 1
+                    cmds.setKeyframe(shader[i][j], time=k, attribute='baseColorR', value=red)
                     cmds.setKeyframe(shader[i][j], time=k, attribute='baseColorG', value=green)
                     cmds.setKeyframe(shader[i][j], time=k, attribute='baseColorB', value=blue)
                     cmds.setKeyframe(node[i][j], time=k, attribute='visibility', value=0)
