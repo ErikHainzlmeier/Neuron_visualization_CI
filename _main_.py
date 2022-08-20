@@ -255,6 +255,18 @@ def applyMaterial(node, material_name): #
         #cmds.sets(node, empty=True, forceElement=shdSG)
         return shd, shdSG
 
+def radius_calculation(max_v, thr, m):
+    max_sphere_size = 0.03
+    min_sphere_size = 0.01
+    max_at_ratio = 0.3
+    max_at_ratio = 1 - max_at_ratio
+    c = max_v - max_at_ratio * (max_v - thr)
+    a = (max_sphere_size - min_sphere_size) / (c - thr)
+    b = max_sphere_size - a * c
+    radius = a * m + b
+    radius = min(max_sphere_size, max(min_sphere_size, radius))
+    return radius
+
 def create_frames(shader, measurements, node, disp_neur, frame_divider):
     print("creating frames...")
     # iterate through all neurons
@@ -275,27 +287,32 @@ def create_frames(shader, measurements, node, disp_neur, frame_divider):
 
             #print("Node", j, "resting potential:", rest_v, "voltage peak:", max_v, "threshold:", threshold)
             toggle = 1
+            pre_radius = 0
+            pre_blue = 0
+            pre_green = 0
+            new_keyframe_threshold = 0.1 #when colour value changes for more than this (percentage), new keyframe is set
             # go through all neurons and compartments
             for k in range(0, len(measurements[disp_neur[i]][j]), frame_divider): # frame divider for example only sets every 10th measurement as a keyframe
                 if measurements[disp_neur[i]][j][k] > threshold:
                     toggle += 1
-                    #red = 1
                     green = min(1, max(0, 2 - abs(50 * measurements[disp_neur[i]][j][k])))
                     blue = min(1, max(0, 1 - abs(50 * measurements[disp_neur[i]][j][k])))
-                    radius = min(0.03, -0.03 + abs(2 * measurements[disp_neur[i]][j][k]))
-                    print("masurement:", measurements[disp_neur[i]][j][k], "radius:", radius)
-                    #cmds.setKeyframe(shader[i][j], time=k, attribute='baseColorR', value=red)
-                    cmds.setKeyframe(shader[i][j], time=k, attribute='baseColorB', value=blue)
-                    cmds.setKeyframe(shader[i][j], time=k, attribute='baseColorG', value=green)
-                    cmds.setKeyframe(node[i][j], time=k, attribute='radius', value=radius)
+                    radius = radius_calculation(max_v, threshold, measurements[disp_neur[i]][j][k])
+                    if abs((pre_blue / (blue + 1e-7)) -1) > new_keyframe_threshold:
+                        cmds.setKeyframe(shader[i][j], time=k, attribute='baseColorB', value=blue)
+                        pre_blue = blue
+                    if abs((pre_green / (green + 1e-7)) -1) > new_keyframe_threshold:
+                        cmds.setKeyframe(shader[i][j], time=k, attribute='baseColorG', value=green)
+                        pre_green = green
+                    if pre_radius != radius:
+                        cmds.setKeyframe(node[i][j], time=k, attribute='radius', value=radius)
+                        pre_radius = radius
                     if toggle == 1:
                         cmds.setKeyframe(node[i][j], time=k, attribute='visibility', value=1)
                 elif measurements[i][j][k] <= threshold and toggle >= 1:
                     toggle = 0
-                    #red = 1
                     green = 1
                     blue = 1
-                    #cmds.setKeyframe(shader[i][j], time=k, attribute='baseColorR', value=red)
                     cmds.setKeyframe(shader[i][j], time=k, attribute='baseColorG', value=green)
                     cmds.setKeyframe(shader[i][j], time=k, attribute='baseColorB', value=blue)
                     cmds.setKeyframe(node[i][j], time=k, attribute='visibility', value=0)
