@@ -13,7 +13,7 @@ def create_ui():
     cmds.separator(height = 30)
     cmds.setParent('..')
     cmds.rowLayout(adjustableColumn=1)
-    cmds.button(label='Build model', command="run_ui(\"" + path_input + "\", \"" + str(a) + "\")", bgc=[0.4, 0.65, 0.2])
+    cmds.button(label='Build model', command="run_ui(\"" + path_input + "\")", bgc=[0.4, 0.65, 0.2])
 
     cmds.showWindow(window)
 
