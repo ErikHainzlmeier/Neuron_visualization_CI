@@ -292,7 +292,11 @@ def create_frames(shader, measurements, node, disp_neur, frame_divider):
                     cmds.setKeyframe(node[i][j], time=k, attribute='visibility', value=0)
                     toggle = 0
 
-
+def create_tt_camera() # make a turntable camaera for animation
+    cameraName = cmds.camera()
+    cameraShape = cameraName[1]
+    aimLoc = 'mySphere18'
+    cmds.aimConstraint(aimLoc, cameraName[0], aimVector=(0,0,-1))
 
 
 def main():
