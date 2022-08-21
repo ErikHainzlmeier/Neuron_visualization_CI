@@ -293,10 +293,15 @@ def create_frames(shader, measurements, node, disp_neur, frame_divider):
                     toggle = 0
 
 def create_tt_camera() # make a turntable camaera for animation
+    #create normal camera
     cameraName = cmds.camera()
     cameraShape = cameraName[1]
     aimLoc = 'mySphere18'
+    # create camera with aim
     cmds.aimConstraint(aimLoc, cameraName[0], aimVector=(0,0,-1))
+    # model is upside down, that is why the camera also has to be upside down
+    cmds.setAttr(cameraName[0]+".scaleY", -1)
+    # create NURBS circle
 
 
 def main():
