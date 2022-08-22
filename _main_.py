@@ -226,9 +226,9 @@ def read_decompress(save_path, us_before=50):
     return decompressed
 
 
-def import_voltage_traces():
+def import_voltage_traces(path):
     print("Import voltage traces...")
-    measurements = read_decompress(measurements_filepath)
+    measurements = read_decompress(path)
     # print(len(measurements))
     return measurements
 
@@ -488,7 +488,7 @@ def create_frames(shader, measurements, node, disp_neur, frame_divider, only_nod
                         cmds.setKeyframe(node[i][j], time=k, attribute='radius', value=radius)
 
 
-def create_camera(disp_neur, node_coords): # make a turntable camera for animation
+def create_camera(disp_neur, node_coords, camera_start): # make a turntable camera for animation
     #create normal camera
     camera = cmds.camera()  # creates a camera
     cameraName = camera[0]  # gives back the camera name
@@ -506,7 +506,7 @@ def create_camera(disp_neur, node_coords): # make a turntable camera for animati
         #x_sum += x_sum
         #y_sum += y_sum
         #z_sum += z_sum
-        
+
     x_average = x_sum /counter
     y_average = y_sum /counter
     z_average = z_sum /counter
@@ -515,14 +515,12 @@ def create_camera(disp_neur, node_coords): # make a turntable camera for animati
     cmds.setAttr(sphere[0] +'.translateX', x_average)
     cmds.setAttr(sphere[0] + '.translateY', y_average)
     cmds.setAttr(sphere[0] + '.translateZ', z_average)
-    cmds.setAttr(sphere[0] + '.visibility', 0)
+
     # set the aim to the calculated center sphere and use the up vector as upside down, because the model is upside down
     cmds.aimConstraint(sphere, cameraName, aimVector=(0, 0, -1), upVector = (0,-1,0))
-    # sphere = cmds.ls(aimLoc)[0] # ls returns names of object specified here not necessary as we already have the name in aimLoc
+    cmds.setAttr(sphere[0] + '.rotateY', camera_start) #set the camera start by rotating the center sphere
 
-    #coord = cmds.getAttr(sphere + '.translate')  # get the coordinates of a sphere in order to center the circle/motion trail of the camera around it
-
-    circle = cmds.circle(nr=(0, -1, 0), r=10)
+    circle = cmds.circle(nr=(0, -1, 0), r=10) # create circle around center sphere for motion path of camera
     cmds.setAttr(circle[0] + '.visibility', 0)  # motion path should never be seen
     cmds.parent(circle[0], sphere[0], relative=True)
     cmds.setAttr(sphere[0] + '.visibility', 0) # parent the motion path to the sphere so the center of the circle is the sphere location
@@ -551,14 +549,14 @@ def main(path, firstNeur, lastNeur, neur_stepsize, show_internodes, import_cochl
     only_nodes = 0
 
     vertices = import_neuron_coordinates()
-    measurements = import_voltage_traces() #path is the path from the UI for measurements filepath
+    measurements = import_voltage_traces(path) #path is the path from the UI for measurements filepath
 
     curves, spans = create_curves(vertices, disp_neur)
     node_coords, comp_lens = calculate_node_coords(curves, spans, disp_neur, only_nodes)
     nodes, shader = create_nodes(node_coords, disp_neur, material_name)
     if creation_frames == "yes":
         create_frames(shader, measurements, nodes, disp_neur, frame_divider, only_nodes, comp_lens)
-        create_camera(disp_neur, node_coords)
+        create_camera(disp_neur, node_coords, camera_start) # camera_start gives the starting point of the camera during the animation
         
     
 
