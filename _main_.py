@@ -296,7 +296,7 @@ def create_camera(): # make a turntable camera for animation
     #create normal camera
     camera = cmds.camera()  # creates a camera
     cameraName = camera[0]  # gives back the camera name
-    cameraShape = cameraName[1]
+    #cameraShape = camera[1]
     aimLoc = 'mySphere25'
     # set the aim to one of the spheres and use the up vector as upside down, because the model is upside down
     cmds.aimConstraint(aimLoc, cameraName, aimVector=(0, 0, -1), upVector = (0,-1,0))

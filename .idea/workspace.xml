@@ -4,7 +4,6 @@
     <list default="true" id="894e27e6-b1ee-4fb5-9690-31cdc73d3698" name="Default Changelist" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/_main_.py" beforeDir="false" afterPath="$PROJECT_DIR$/_main_.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/camera.py" beforeDir="false" afterPath="$PROJECT_DIR$/camera.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -32,12 +31,12 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent"><![CDATA[{
-  "keyToString": {
-    "WebServerToolWindowFactoryState": "false",
-    "last_opened_file_path": "C:/Users/Erik/Documents/Elektrotechnik/Master/SS2022/Projektpraktikum/Neuron_visualization_CI/_main_.py"
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;WebServerToolWindowFactoryState&quot;: &quot;false&quot;,
+    &quot;last_opened_file_path&quot;: &quot;C:/Users/Erik/Documents/Elektrotechnik/Master/SS2022/Projektpraktikum/Neuron_visualization_CI/_main_.py&quot;
   }
-}]]></component>
+}</component>
   <component name="RunManager" selected="MayaCharm.MAYA2023">
     <configuration name="MAYA2023" type="MAYACHARM_RUN_CONFIGURATION" factoryName="MAYACHARM_RUN_CONFIGURATION">
       <option name="executionType" value="FILE" />
@@ -86,7 +85,7 @@
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
       <updated>1657703670495</updated>
-      <workItem from="1661073340685" duration="17177000" />
+      <workItem from="1661073340685" duration="19106000" />
     </task>
     <servers />
   </component>
