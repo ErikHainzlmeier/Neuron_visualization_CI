@@ -497,7 +497,6 @@ def create_camera(disp_neur, node_coords): # make a turntable camera for animati
     y_sum = 0
     z_sum = 0
     counter = 0
-    print(len(disp_neur))
     for i in range(len(disp_neur)):
         for j in range(len(node_coords[i])):
             x_sum += node_coords[i][j][0]
@@ -507,7 +506,7 @@ def create_camera(disp_neur, node_coords): # make a turntable camera for animati
         #x_sum += x_sum
         #y_sum += y_sum
         #z_sum += z_sum
-        print(counter)
+        
     x_average = x_sum /counter
     y_average = y_sum /counter
     z_average = z_sum /counter
