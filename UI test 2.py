@@ -28,7 +28,7 @@ class ui_settings(object):
         cmds.setParent('..')
         cmds.rowColumnLayout(numberOfColumns=2, columnAttach=(1, 'left', 0), columnWidth=[(1, 145), (2, 70)])
         cmds.text("Measurement Stepsize:")
-        self.measur_stepsize = cmds.intField(minValue=0, maxValue=1000, value=1)
+        self.measur_stepsize = cmds.intField(minValue=1, maxValue=1000, value=1)
         cmds.text(" ")
         cmds.text(" ")
         cmds.text(" ")
@@ -123,36 +123,17 @@ class ui_settings(object):
         light_intensity = cmds.floatSliderGrp(self.light_intensity, query=True, value=True)
         camera_speed = cmds.floatSliderGrp(self.camera_speed, query=True, value=True)
 
-        run_stuff(path, measur_stepsize, firstNeur, lastNeur, neur_stepsize, import_cochlea, cochlea_transparency,
+        main(path, measur_stepsize, firstNeur, lastNeur, neur_stepsize, import_cochlea, cochlea_transparency,
                   cochlea_color, import_tube, tube_transparency, tube_color, import_nerve, nerve_transparency,
                   nerve_color, light_intensity, camera_speed)
         cmds.deleteUI(self.window, window=True)
 
 
-def run_stuff(path, measur_stepsize, firstNeur, lastNeur, neur_stepsize, import_cochlea, cochlea_transparency,
+def main(path, measur_stepsize, firstNeur, lastNeur, neur_stepsize, import_cochlea, cochlea_transparency,
                   cochlea_color, import_tube, tube_transparency, tube_color, import_nerve, nerve_transparency,
                   nerve_color, light_intensity, camera_speed):
     print("this is the start of the program")
-    print("path:", path)
-    print("measurement stepsize:", measur_stepsize)
-    print("firstNeur:", firstNeur)
-    print("lastNeur:", lastNeur)
-    print("neur_stepsize:", neur_stepsize)
-    print("import_cochlea:", import_cochlea)
-    print("cochlea_transparency:", cochlea_transparency)
-    print("cochlea_color:", cochlea_color)
-    print("import_tube:", import_tube)
-    print("tube_transparency:", tube_transparency)
-    print("tube_color:", tube_color)
-    print("import_nerve:", import_nerve)
-    print("nerve_transparency:", nerve_transparency)
-    print("nerve_color:", nerve_color)
-    print("light_intensity:", light_intensity)
-    print("camera_speed:", camera_speed)
 
 
-def main():
-    myWindow = ui_settings()
 
-
-main()
+ui_settings()
