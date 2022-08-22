@@ -512,8 +512,6 @@ def create_camera(disp_neur, node_coords): # make a turntable camera for animati
     y_average = y_sum /counter
     z_average = z_sum /counter
                 
-
-
     sphere = cmds.sphere()
     cmds.setAttr(sphere[0] +'.translateX', x_average)
     cmds.setAttr(sphere[0] + '.translateY', y_average)
