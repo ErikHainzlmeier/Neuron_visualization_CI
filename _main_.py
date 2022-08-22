@@ -15,10 +15,10 @@ import pdb
 
 
 
-coords_filepath = "C:\\Users\\Rafael\\Desktop\\praktikum bioanaloge\\ci_refine_list_mdl\\ci_refine_list_mdl.pkl"
-#coords_filepath = "C:\\Users\\Erik\\Documents\\Elektrotechnik\\Master\\SS2022\\Projektpraktikum\\ci_refine_list_mdl.pkl"
-measurements_filepath = "C:\\Users\\Rafael\\Desktop\\praktikum bioanaloge\\projektpraktikum_animation_ss2022\\Rattay_2013_e7_o2.0_0.001000149883801424A.p"
-#measurements_filepath = "C:\\Users\\Erik\\Documents\\Elektrotechnik\\Master\\SS2022\\Projektpraktikum\\projektpraktikum_animation_ss2022\\projektpraktikum_animation_ss2022\\Rattay_2013_e7_o2.0_0.001000149883801424A.p"
+#coords_filepath = "C:\\Users\\Rafael\\Desktop\\praktikum bioanaloge\\ci_refine_list_mdl\\ci_refine_list_mdl.pkl"
+coords_filepath = "C:\\Users\\Erik\\Documents\\Elektrotechnik\\Master\\SS2022\\Projektpraktikum\\ci_refine_list_mdl.pkl"
+#measurements_filepath = "C:\\Users\\Rafael\\Desktop\\praktikum bioanaloge\\projektpraktikum_animation_ss2022\\Rattay_2013_e7_o2.0_0.001000149883801424A.p"
+measurements_filepath = "C:\\Users\\Erik\\Documents\\Elektrotechnik\\Master\\SS2022\\Projektpraktikum\\projektpraktikum_animation_ss2022\\projektpraktikum_animation_ss2022\\Rattay_2013_e7_o2.0_0.001000149883801424A.p"
 
 class ui_settings(object):
 
@@ -302,8 +302,8 @@ def calculate_node_coords(curves, spans, disp_neur):
     print("Calcualting coordinates of nodes...")
     node_coords = []
 
-    comp_lens = pd.read_pickle('C:\\Users\\Rafael\\Documents\\GitHub\\Neuron_visualization_CI\\compartmentlengths_mm.pkl')
-    #comp_lens = pd.read_pickle('C:\\Users\\Erik\\Documents\\Elektrotechnik\\Master\\SS2022\\Projektpraktikum\\Neuron_visualization_CI\\compartmentlengths_mm.pkl')
+    #comp_lens = pd.read_pickle('C:\\Users\\Rafael\\Documents\\GitHub\\Neuron_visualization_CI\\compartmentlengths_mm.pkl')
+    comp_lens = pd.read_pickle('C:\\Users\\Erik\\Documents\\Elektrotechnik\\Master\\SS2022\\Projektpraktikum\\Neuron_visualization_CI\\compartmentlengths_mm.pkl')
     # iterate through every neuron
     for i in range(len(disp_neur)):
 
@@ -427,28 +427,54 @@ def create_frames(shader, measurements, node, disp_neur, frame_divider):
                     cmds.setKeyframe(node[i][j], time=k, attribute='visibility', value=0)
                     toggle = 0
 
-def create_camera(): # make a turntable camera for animation
+def create_camera(disp_neur, node_coords): # make a turntable camera for animation
     #create normal camera
     camera = cmds.camera()  # creates a camera
     cameraName = camera[0]  # gives back the camera name
     #cameraShape = camera[1]
-    aimLoc = 'mySphere25'
-    # set the aim to one of the spheres and use the up vector as upside down, because the model is upside down
-    cmds.aimConstraint(aimLoc, cameraName, aimVector=(0, 0, -1), upVector = (0,-1,0))
+    x_sum = 0
+    y_sum = 0
+    z_sum = 0
+    counter = 0
+    print(len(disp_neur))
+    for i in range(len(disp_neur)):
+        for j in range(len(node_coords[i])):
+            x_sum += node_coords[i][j][0]
+            y_sum += node_coords[i][j][1]
+            z_sum += node_coords[i][j][2]
+            counter+= 1
+        #x_sum += x_sum
+        #y_sum += y_sum
+        #z_sum += z_sum
+        print(counter)
+    x_average = x_sum / (len(disp_neur))/counter
+    y_average = y_sum / (len(disp_neur))/counter
+    z_average = z_sum / (len(disp_neur))/counter
+
+
+
+    sphere = cmds.sphere()
+    cmds.setAttr(sphere[0] +'.translateX', x_average)
+    cmds.setAttr(sphere[0] + '.translateY', y_average)
+    cmds.setAttr(sphere[0] + '.translateZ', z_average)
+    cmds.setAttr(sphere[0] + '.visibility', 0)
+    # set the aim to the calculated center sphere and use the up vector as upside down, because the model is upside down
+    cmds.aimConstraint(sphere, cameraName, aimVector=(0, 0, -1), upVector = (0,-1,0))
     # sphere = cmds.ls(aimLoc)[0] # ls returns names of object specified here not necessary as we already have the name in aimLoc
-    sphere = aimLoc  # creating a duplicate variable sphere for better understanding
-    coord = cmds.getAttr(sphere + '.translate')  # get the coordinates of a sphere in order to center the circle/motion trail of the camera around it
+
+    #coord = cmds.getAttr(sphere + '.translate')  # get the coordinates of a sphere in order to center the circle/motion trail of the camera around it
 
     circle = cmds.circle(nr=(0, -1, 0), r=10)
     cmds.setAttr(circle[0] + '.visibility', 0)  # motion path should never be seen
-    cmds.parent(circle[0], sphere, relative=True)  # parent the motion path to the sphere so the center of the circle is the sphere location
+    cmds.parent(circle[0], sphere[0], relative=True)
+    cmds.setAttr(sphere[0] + '.visibility', 0) # parent the motion path to the sphere so the center of the circle is the sphere location
     # before creation of path animation, already the rendersettings/timeslider settings (fps) should be done
     # constrain the camera to the circle path and set start time and end time of rotation
     cmds.pathAnimation(cameraName, stu=130, etu=600, curve=circle[0])
 
 
 
-def main(path, measur_stepsize, firstNeur, lastNeur, neur_stepsize, show_internodes, import_cochlea, cochlea_transparency,
+def main(path, firstNeur, lastNeur, neur_stepsize, show_internodes, import_cochlea, cochlea_transparency,
                   cochlea_color, import_tube, tube_transparency, tube_color, import_nerve, nerve_transparency,
                   nerve_color, light_intensity, camera_radius, camera_start):
     ## cleaning the scene and all unused objects before creating new ones
@@ -460,20 +486,20 @@ def main(path, measur_stepsize, firstNeur, lastNeur, neur_stepsize, show_interno
         mel.eval('hyperShadePanelMenuCommand("hyperShadePanel1", "deleteUnusedNodes");')
     ###################################################
 
-    frame_divider = measur_stepsize # which measurements should be keyframed
-    disp_neur = range(firstNeur, lastNeur, neur_stepsize)   #display neuron from ... to ...
+    frame_divider = 1 # which measurements should be keyframed
+    disp_neur = range(240,242)   #display neuron from ... to ...
     creation_frames = "yes"
     material_name= 'standardSurface'
 
     vertices = import_neuron_coordinates()
-    measurements = import_voltage_traces()
+    measurements = import_voltage_traces() #path is the path from the UI for measurements filepath
 
     curves, spans = create_curves(vertices, disp_neur)
     node_coords = calculate_node_coords(curves, spans, disp_neur)
     nodes, shader = create_nodes(node_coords, disp_neur, material_name)
     if creation_frames == "yes":
         create_frames(shader, measurements, nodes, disp_neur, frame_divider)
-        create_camera()
+        create_camera(disp_neur, node_coords)
     
 
     print("finished :)")
