@@ -120,6 +120,8 @@ class ui_settings(object):
         self.camera_start = cmds.floatSliderGrp(field=True, label='Camera Startpoint:', minValue=-360, maxValue=360,
                                                 value=0,
                                                 columnAlign=[1, 'right'])
+        #cmds.text("create keyframes:")
+        #self.keyframes = cmds.checkBox(label=' ')
 
         # Build model button
         cmds.setParent('..')
@@ -144,6 +146,7 @@ class ui_settings(object):
         import_nerve = cmds.checkBox(self.import_nerve, query=True, value=True)
         nerve_transparency = cmds.floatSliderGrp(self.nerve_transparency, query=True, value=True)
         nerve_color = cmds.colorSliderGrp(self.nerve_color, query=True, rgbValue=True)
+        #keyframes = cmds.checkBox(self.keyframes, query = True, value = True)
         light_intensity = cmds.floatSliderGrp(self.light_intensity, query=True, value=True)
         camera_radius = cmds.floatSliderGrp(self.camera_radius, query=True, value=True)
         camera_start = cmds.floatSliderGrp(self.camera_start, query=True, value=True)
@@ -456,11 +459,11 @@ def main(path, measur_stepsize, firstNeur, lastNeur, neur_stepsize, show_interno
         cmds.delete()
         mel.eval('hyperShadePanelMenuCommand("hyperShadePanel1", "deleteUnusedNodes");')
     ###################################################
-    number_of_nodes = 50
-    frame_divider = 5
+
+    frame_divider = measur_stepsize # which measurements should be keyframed
     disp_neur = range(firstNeur, lastNeur, neur_stepsize)   #display neuron from ... to ...
     creation_frames = "yes"
-    material_name='standardSurface'
+    material_name= 'standardSurface'
 
     vertices = import_neuron_coordinates()
     measurements = import_voltage_traces()
