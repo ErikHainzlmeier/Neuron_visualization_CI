@@ -80,3 +80,4 @@ test_comp_lengths.mb
 .idea/workspace.xml
 .idea/Neuron_visualization_CI.iml
 .idea/misc.xml
+*.xml
