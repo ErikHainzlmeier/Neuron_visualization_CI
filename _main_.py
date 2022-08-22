@@ -292,16 +292,25 @@ def create_frames(shader, measurements, node, disp_neur, frame_divider):
                     cmds.setKeyframe(node[i][j], time=k, attribute='visibility', value=0)
                     toggle = 0
 
-def create_tt_camera() # make a turntable camaera for animation
+def create_camera(): # make a turntable camera for animation
     #create normal camera
-    cameraName = cmds.camera()
+    camera = cmds.camera()  # creates a camera
+    cameraName = camera[0]  # gives back the camera name
     cameraShape = cameraName[1]
-    aimLoc = 'mySphere18'
-    # create camera with aim
-    cmds.aimConstraint(aimLoc, cameraName[0], aimVector=(0,0,-1))
-    # model is upside down, that is why the camera also has to be upside down
-    cmds.setAttr(cameraName[0]+".scaleY", -1)
-    # create NURBS circle
+    aimLoc = 'mySphere25'
+    # set the aim to one of the spheres and use the up vector as upside down, because the model is upside down
+    cmds.aimConstraint(aimLoc, cameraName, aimVector=(0, 0, -1), upVector = (0,-1,0))
+    # sphere = cmds.ls(aimLoc)[0] # ls returns names of object specified here not necessary as we already have the name in aimLoc
+    sphere = aimLoc  # creating a duplicate variable sphere for better understanding
+    coord = cmds.getAttr(sphere + '.translate')  # get the coordinates of a sphere in order to center the circle/motion trail of the camera around it
+
+    circle = cmds.circle(nr=(0, -1, 0), r=10)
+    cmds.setAttr(circle[0] + '.visibility', 0)  # motion path should never be seen
+    cmds.parent(circle[0], sphere, relative=True)  # parent the motion path to the sphere so the center of the circle is the sphere location
+    # before creation of path animation, already the rendersettings/timeslider settings (fps) should be done
+    # constrain the camera to the circle path and set start time and end time of rotation
+    cmds.pathAnimation(cameraName, stu=130, etu=600, curve=circle[0])
+
 
 
 def main():
@@ -315,7 +324,7 @@ def main():
     ###################################################
     number_of_nodes = 50
     frame_divider = 5
-    disp_neur = range(239, 240)   #display neuron from ... to ...
+    disp_neur = range(235, 241)   #display neuron from ... to ...
     creation_frames = "yes"
     material_name='standardSurface'
 
@@ -327,6 +336,7 @@ def main():
     nodes, shader = create_nodes(node_coords, disp_neur, material_name)
     if creation_frames == "yes":
         create_frames(shader, measurements, nodes, disp_neur, frame_divider)
+        create_camera()
     
 
     print("finished :)")
