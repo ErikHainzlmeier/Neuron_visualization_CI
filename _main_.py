@@ -208,7 +208,7 @@ def calculate_node_coords(curves, spans, disp_neur, only_nodes):
             # print("spans[", i, "]:", spans[i], "span_param:", span_param)
             # print("current coords:", current_coords, "\n\n")
 
-    return node_coords
+    return node_coords, comp_lens
 
 
 
@@ -255,31 +255,33 @@ def applyMaterial(node, material_name): #
         #cmds.sets(node, empty=True, forceElement=shdSG)
         return shd, shdSG
 
-def create_frames(shader, measurements, node, disp_neur, frame_divider):
+def create_frames(shader, measurements, node, disp_neur, frame_divider, only_nodes, comp_lens):
     print("creating frames...")
     # iterate through all neurons
     max_v = np.max(measurements)
     rest_v = measurements[0][0][-1]
-    threshold = rest_v + 0.8 * abs(max_v - rest_v)
-    yellow_threshold = 0.5
-    radius_threshold = 0.2
+    threshold = rest_v + 0.7 * abs(max_v - rest_v)
+    yellow_threshold = 0.5 #nicht veränderbar
+    radius_threshold = 0.5
     print("threshold",threshold, "max value", max_v,"rest v", rest_v)
 
     #iterate through all neurons
     for i in range(len(disp_neur)):
         # iterate through all nodes
         for j in range(len(shader[i])):
+
             print("Frame creation... Neuron", disp_neur[i], "Node", j)
             #pdb.set_trace()
             max_v_node = max(measurements[disp_neur[i]][j])
+            toggle = 0
+            color_toggle2 = 0
+            radius_toggle2 = 0
 
             # iterate through all measurement steps
             for k in range(0, len(measurements[disp_neur[i]][j]), frame_divider):
+
                 temp_meas = measurements[disp_neur[i]][j][k]
                 rel = (temp_meas - threshold) / (max_v - threshold)
-                toggle = 0
-                color_toggle2 = 0
-                radius_toggle2 = 0
 
                 #Anfangs Keyframe
                 if k == 0:
@@ -300,7 +302,7 @@ def create_frames(shader, measurements, node, disp_neur, frame_divider):
                     cmds.setKeyframe(shader[i][j], time=k, attribute='baseColorB', value=blue)
                     cmds.setKeyframe(node[i][j], time=k, attribute='visibility', value=visibility)
                     cmds.setKeyframe(node[i][j], time=k, attribute='radius', value=radius)
-                elif toggle > 0 and rel > 0:
+                elif toggle > 0 and rel < 0:
                     toggle = 0
                     blue = 1
                     radius = 0.01
@@ -336,77 +338,20 @@ def create_frames(shader, measurements, node, disp_neur, frame_divider):
                 #peak
                 if temp_meas == max_v_node:
                     #Color:
-                    if rel < yellow_threshold:
+                    if rel <= yellow_threshold:
                         #keyframe yellow calculation
-                        blue = min(1, max(0, 1 - abs(50 * measurements[disp_neur[i]][j][k])))
+                        blue = min(1, max(0, 1 - 2 * rel))
                         cmds.setKeyframe(shader[i][j], time=k, attribute='baseColorB', value=blue)
                     else:
                         # keyframe orange calculation
-                        green = min(1, max(0, 2 - abs(50 * measurements[disp_neur[i]][j][k])))
+                        green = min(1, max(0, 2 - 2 * rel))
                         cmds.setKeyframe(shader[i][j], time=k, attribute='baseColorG', value=green)
 
                     #Größe:
-                    if rel < radius_threshold:
+                    if rel <= radius_threshold:
                         #radius calculation
-                        radius = 0
+                        radius = 0.01 + 0.02 * rel / radius_threshold
                         cmds.setKeyframe(node[i][j], time=k, attribute='radius', value=radius)
-
-
-
-
-
-
-
-
-
-def zwischengelagert():
-    if 1:
-        if 1:
-            #print("Node", j, "resting potential:", rest_v, "voltage peak:", max_v, "threshold:", threshold)
-            toggle = 1
-            radius = 0.01
-            # go through all neurons and compartments
-            for k in range(0, len(measurements[disp_neur[i]][j]), frame_divider): # frame divider for example only sets every 10th measurement as a keyframe
-                temp_meas = measurements[disp_neur[i]][j][k]
-                if temp_meas > threshold:
-                    toggle += 1
-                    rel = (temp_meas - threshold) / (max_v - threshold)
-
-                    green = min(1, max(0, 2 - abs(50 * measurements[disp_neur[i]][j][k])))
-                    blue = min(1, max(0, 1 - abs(50 * measurements[disp_neur[i]][j][k])))
-
-
-                    if rel > 0.2 and radius < 0.03:
-                        radius = 0.03
-                        cmds.setKeyframe(node[i][j], time=k, attribute='radius', value=radius)
-
-                    if rel > 0.5 and
-                    cmds.setKeyframe(shader[i][j], time=k, attribute='baseColorG', value=green)
-
-                    if rel
-                    cmds.setKeyframe(shader[i][j], time=k, attribute='baseColorB', value=blue)
-
-                    #cmds.setKeyframe(node[i][j], time=k, attribute='radius', value=radius)
-
-                    if toggle == 1:
-                        green = 1
-                        blue = 1
-                        radius = 0.01
-                        cmds.setKeyframe(node[i][j], time=k, attribute='visibility', value=1)
-                        cmds.setKeyframe(shader[i][j], time=k, attribute='baseColorG', value=green)
-                        cmds.setKeyframe(shader[i][j], time=k, attribute='baseColorB', value=blue)
-                        cmds.setKeyframe(node[i][j], time=k, attribute='radius', value=radius)
-                elif toggle >= 1:
-                    toggle = 0
-                    green = 1
-                    blue = 1
-                    red = 1
-                    cmds.setKeyframe(shader[i][j], time=k, attribute='baseColorR', value=red)
-                    cmds.setKeyframe(shader[i][j], time=k, attribute='baseColorG', value=green)
-                    cmds.setKeyframe(shader[i][j], time=k, attribute='baseColorB', value=blue)
-                    cmds.setKeyframe(node[i][j], time=k, attribute='visibility', value=0)
-
-
 
 
 
@@ -420,8 +365,8 @@ def main():
         mel.eval('hyperShadePanelMenuCommand("hyperShadePanel1", "deleteUnusedNodes");')
     ###################################################
     number_of_nodes = 50
-    frame_divider = 5
-    disp_neur = range(239, 240)   #display neuron from ... to ...
+    frame_divider = 1
+    disp_neur = range(238, 241)   #display neuron from ... to ...
     creation_frames = "yes"
     material_name='aiStandardSurface'
     only_nodes = 0
@@ -430,10 +375,10 @@ def main():
     measurements = import_voltage_traces()
 
     curves, spans = create_curves(vertices, disp_neur)
-    node_coords = calculate_node_coords(curves, spans, disp_neur, only_nodes)
+    node_coords, comp_lens = calculate_node_coords(curves, spans, disp_neur, only_nodes)
     nodes, shader = create_nodes(node_coords, disp_neur, material_name)
     if creation_frames == "yes":
-        create_frames(shader, measurements, nodes, disp_neur, frame_divider)
+        create_frames(shader, measurements, nodes, disp_neur, frame_divider, only_nodes, comp_lens)
     
 
     print("finished :)")
