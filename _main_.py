@@ -15,10 +15,144 @@ import pdb
 
 
 
-#coords_filepath = "C:\\Users\\Rafael\\Desktop\\praktikum bioanaloge\\ci_refine_list_mdl\\ci_refine_list_mdl.pkl"
-coords_filepath = "C:\\Users\\Erik\\Documents\\Elektrotechnik\\Master\\SS2022\\Projektpraktikum\\ci_refine_list_mdl.pkl"
-#measurements_filepath = "C:\\Users\\Rafael\\Desktop\\praktikum bioanaloge\\projektpraktikum_animation_ss2022\\Rattay_2013_e7_o2.0_0.001000149883801424A.p"
-measurements_filepath = "C:\\Users\\Erik\\Documents\\Elektrotechnik\\Master\\SS2022\\Projektpraktikum\\projektpraktikum_animation_ss2022\\projektpraktikum_animation_ss2022\\Rattay_2013_e7_o2.0_0.001000149883801424A.p"
+coords_filepath = "C:\\Users\\Rafael\\Desktop\\praktikum bioanaloge\\ci_refine_list_mdl\\ci_refine_list_mdl.pkl"
+#coords_filepath = "C:\\Users\\Erik\\Documents\\Elektrotechnik\\Master\\SS2022\\Projektpraktikum\\ci_refine_list_mdl.pkl"
+measurements_filepath = "C:\\Users\\Rafael\\Desktop\\praktikum bioanaloge\\projektpraktikum_animation_ss2022\\Rattay_2013_e7_o2.0_0.001000149883801424A.p"
+#measurements_filepath = "C:\\Users\\Erik\\Documents\\Elektrotechnik\\Master\\SS2022\\Projektpraktikum\\projektpraktikum_animation_ss2022\\projektpraktikum_animation_ss2022\\Rattay_2013_e7_o2.0_0.001000149883801424A.p"
+
+class ui_settings(object):
+
+    # constructor
+    def __init__(self):
+        self.window = "MR_Window"
+        self.title = "Settings"
+        self.size = (395, 600)
+
+        # close old window is open
+        if cmds.window(self.window, exists=True):
+            cmds.deleteUI(self.window, window=True)
+
+        # create new window
+        self.window = cmds.window(self.window, title=self.title, widthHeight=self.size)
+
+        cmds.columnLayout(adjustableColumn=True)
+
+        # Title
+        cmds.text(self.title)
+        cmds.separator(height=20)
+
+        # measurement settings
+        cmds.rowColumnLayout(numberOfColumns=2, columnAttach=(1, 'left', 0), columnWidth=[(1, 145), (2, 250)])
+        cmds.text(" -Measurement Settings:")
+        cmds.text(" ")
+        cmds.text(label='Measurements Filepath:')
+        self.filepath = cmds.textField()
+        cmds.text(" ")
+        cmds.text(" ")
+        cmds.text(" ")
+        cmds.text(" ")
+
+        # Model specifications
+        cmds.setParent('..')
+        cmds.rowColumnLayout(numberOfColumns=2, columnAttach=(1, 'left', 0), columnWidth=[(1, 145), (2, 70)])
+        cmds.text(" -Model Specicifactions:")
+        cmds.text(" ")
+        cmds.text("First Neuron:")
+        self.firstNeur = cmds.intField(minValue=0, maxValue=399, value=0)
+        cmds.text("Last Neuron:")
+        self.lastNeur = cmds.intField(minValue=1, maxValue=400, value=400)
+        cmds.text("Step Size:")
+        self.neur_stepsize = cmds.intField(minValue=1, maxValue=400, value=1)
+
+        # measurement steps
+        # cmds.text(" -Cochlea Structures:")
+        # cmds.text(" ")
+        cmds.setParent('..')
+        cmds.rowColumnLayout(numberOfColumns=3, columnAttach=(1, 'left', 0), columnWidth=[(1, 70), (2, 75), (3, 70)])
+        cmds.text("Internodes:")
+        cmds.text("Show: ", align='right')
+        self.show_internodes = cmds.checkBox(label=' ')
+        cmds.text("Cochlea:")
+        cmds.text("Import: ", align='right')
+        self.import_cochlea = cmds.checkBox(label=' ')
+        cmds.setParent('..')
+        cmds.rowColumnLayout(numberOfColumns=1, columnAttach=(1, 'left', 0), columnWidth=[(1, 395)])
+        self.cochlea_transparency = cmds.floatSliderGrp(field=True, label='Transparency:', minValue=0, maxValue=1,
+                                                        value=0.8, columnAlign=[1, 'right'])
+        self.cochlea_color = cmds.colorSliderGrp(label='Colour:', rgb=(0.7, 0.7, 0.7), columnAlign=[1, 'right'])
+
+        cmds.setParent('..')
+        cmds.rowColumnLayout(numberOfColumns=3, columnAttach=(1, 'left', 0), columnWidth=[(1, 70), (2, 75), (3, 70)])
+        cmds.text("Tube:")
+        cmds.text("Import: ", align='right')
+        self.import_tube = cmds.checkBox(label=' ')
+        cmds.setParent('..')
+        cmds.rowColumnLayout(numberOfColumns=1, columnAttach=(1, 'left', 0), columnWidth=[(1, 395)])
+        self.tube_transparency = cmds.floatSliderGrp(field=True, label='Transparency:', minValue=0, maxValue=1,
+                                                     value=0.9, columnAlign=[1, 'right'])
+        self.tube_color = cmds.colorSliderGrp(label='Colour:', rgb=(0.7, 0.7, 0.7), columnAlign=[1, 'right'])
+
+        cmds.setParent('..')
+        cmds.rowColumnLayout(numberOfColumns=3, columnAttach=(1, 'left', 0), columnWidth=[(1, 70), (2, 75), (3, 70)])
+        cmds.text("Nerve:")
+        cmds.text("Import: ", align='right')
+        self.import_nerve = cmds.checkBox(label=' ')
+        cmds.setParent('..')
+        cmds.rowColumnLayout(numberOfColumns=1, columnAttach=(1, 'left', 0), columnWidth=[(1, 395)])
+        self.nerve_transparency = cmds.floatSliderGrp(field=True, label='Transparency:', minValue=0, maxValue=1,
+                                                      value=0, columnAlign=[1, 'right'])
+        self.nerve_color = cmds.colorSliderGrp(label='Colour:', rgb=(0.5, 0.7, 1), columnAlign=[1, 'right'])
+        cmds.text(" ")
+        cmds.text(" ")
+
+        # Animation settings
+        cmds.setParent('..')
+        cmds.rowColumnLayout(numberOfColumns=2, columnAttach=(1, 'left', 0), columnWidth=[(1, 145), (2, 70)])
+        cmds.text(" -Animation Settings:")
+        cmds.text(" ")
+        cmds.setParent('..')
+        cmds.rowColumnLayout(numberOfColumns=1, columnAttach=(1, 'left', 0), columnWidth=[(1, 395)])
+        self.light_intensity = cmds.floatSliderGrp(field=True, label='Light Intensity:', minValue=0, maxValue=1,
+                                                   value=0,
+                                                   columnAlign=[1, 'right'])
+        self.camera_radius = cmds.floatSliderGrp(field=True, label='Camera Radius:', minValue=1, maxValue=25, value=12,
+                                                columnAlign=[1, 'right'])
+        self.camera_start = cmds.floatSliderGrp(field=True, label='Camera Startpoint:', minValue=-360, maxValue=360,
+                                                value=0,
+                                                columnAlign=[1, 'right'])
+
+        # Build model button
+        cmds.setParent('..')
+        cmds.separator(height=30)
+        cmds.button(label='Build Model', bgc=[0.4, 0.65, 0.2], command=self.run_variables)
+
+        # display new window
+        cmds.showWindow()
+
+    def run_variables(self, *args):
+        path = cmds.textField(self.filepath, query=True, text=True)
+        firstNeur = cmds.intField(self.firstNeur, query=True, value=True)
+        lastNeur = cmds.intField(self.lastNeur, query=True, value=True)
+        neur_stepsize = cmds.intField(self.neur_stepsize, query=True, value=True)
+        show_internodes = cmds.checkBox(self.show_internodes, query=True, value=True)
+        import_cochlea = cmds.checkBox(self.import_cochlea, query=True, value=True)
+        cochlea_transparency = cmds.floatSliderGrp(self.cochlea_transparency, query=True, value=True)
+        cochlea_color = cmds.colorSliderGrp(self.cochlea_color, query=True, rgbValue=True)
+        import_tube = cmds.checkBox(self.import_tube, query=True, value=True)
+        tube_transparency = cmds.floatSliderGrp(self.tube_transparency, query=True, value=True)
+        tube_color = cmds.colorSliderGrp(self.tube_color, query=True, rgbValue=True)
+        import_nerve = cmds.checkBox(self.import_nerve, query=True, value=True)
+        nerve_transparency = cmds.floatSliderGrp(self.nerve_transparency, query=True, value=True)
+        nerve_color = cmds.colorSliderGrp(self.nerve_color, query=True, rgbValue=True)
+        light_intensity = cmds.floatSliderGrp(self.light_intensity, query=True, value=True)
+        camera_radius = cmds.floatSliderGrp(self.camera_radius, query=True, value=True)
+        camera_start = cmds.floatSliderGrp(self.camera_start, query=True, value=True)
+
+        cmds.deleteUI(self.window, window=True)
+        main(path, firstNeur, lastNeur, neur_stepsize, show_internodes, import_cochlea, cochlea_transparency,
+                  cochlea_color, import_tube, tube_transparency, tube_color, import_nerve, nerve_transparency,
+                  nerve_color, light_intensity, camera_radius, camera_start)
+
 
 
 def unflatten_nlist(l):
@@ -165,8 +299,8 @@ def calculate_node_coords(curves, spans, disp_neur):
     print("Calcualting coordinates of nodes...")
     node_coords = []
 
-    #comp_lens = pd.read_pickle('C:\\Users\\Rafael\\Documents\\GitHub\\Neuron_visualization_CI\\compartmentlengths_mm.pkl')
-    comp_lens = pd.read_pickle('C:\\Users\\Erik\\Documents\\Elektrotechnik\\Master\\SS2022\\Projektpraktikum\\Neuron_visualization_CI\\compartmentlengths_mm.pkl')
+    comp_lens = pd.read_pickle('C:\\Users\\Rafael\\Documents\\GitHub\\Neuron_visualization_CI\\compartmentlengths_mm.pkl')
+    #comp_lens = pd.read_pickle('C:\\Users\\Erik\\Documents\\Elektrotechnik\\Master\\SS2022\\Projektpraktikum\\Neuron_visualization_CI\\compartmentlengths_mm.pkl')
     # iterate through every neuron
     for i in range(len(disp_neur)):
 
@@ -203,8 +337,6 @@ def calculate_node_coords(curves, spans, disp_neur):
             # print("current coords:", current_coords, "\n\n")
 
     return node_coords
-
-
 
 def create_nodes(node_coords, disp_neur, material_name):
     print("creating nodes...")
@@ -313,7 +445,9 @@ def create_camera(): # make a turntable camera for animation
 
 
 
-def main():
+def main(path, measur_stepsize, firstNeur, lastNeur, neur_stepsize, show_internodes, import_cochlea, cochlea_transparency,
+                  cochlea_color, import_tube, tube_transparency, tube_color, import_nerve, nerve_transparency,
+                  nerve_color, light_intensity, camera_radius, camera_start):
     ## cleaning the scene and all unused objects before creating new ones
     cmds.select(all=True)
     mySel = cmds.ls(sl=1)
@@ -324,7 +458,7 @@ def main():
     ###################################################
     number_of_nodes = 50
     frame_divider = 5
-    disp_neur = range(235, 241)   #display neuron from ... to ...
+    disp_neur = range(firstNeur, lastNeur, neur_stepsize)   #display neuron from ... to ...
     creation_frames = "yes"
     material_name='standardSurface'
 
@@ -342,4 +476,4 @@ def main():
     print("finished :)")
 
 if __name__ == "__main__":
-    main()
+    ui_settings()
