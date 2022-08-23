@@ -627,7 +627,9 @@ def main(path, model_folderpath, firstNeur, lastNeur, neur_stepsize, show_intern
         create_frames(shader, measurements, nodes, disp_neur, only_nodes, comp_lens)
         create_camera(disp_neur, node_coords, camera_start, camera_radius) # camera_start gives the starting point of the camera during the animation
         
-    
+    print("deleting curves...")
+    cmds.select("curves", hierarchy=True)
+    cmds.delete()
 
     print("finished :)")
 
