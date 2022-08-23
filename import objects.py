@@ -1,4 +1,7 @@
 
-filepath = "C:\\Users\\Rafael\\Desktop\\praktikum bioanaloge\\CL_geom_v2\\human_CL_anime.stl"
+filepath = "C:\\Users\\Rafael\\Desktop\\praktikum bioanaloge\\CL_geom_v2\\Neurons\\"
 
-test = cmds.file(filepath, i=True)
+for i in range (0,400):
+    filename = filepath + "sweep" + str(i+1) + ".stl"
+    print(filename)
+    cmds.file(filename, i=True)
