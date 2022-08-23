@@ -16,7 +16,7 @@ import pdb
 
 
 #coords_filepath = "C:\\Users\\Rafael\\Desktop\\praktikum bioanaloge\\ci_refine_list_mdl\\ci_refine_list_mdl.pkl"
-coords_filepath = "C:\\Users\\Erik\\Documents\\Elektrotechnik\\Master\\SS2022\\Projektpraktikum\\ci_refine_list_mdl.pkl"
+#coords_filepath = "C:\\Users\\Erik\\Documents\\Elektrotechnik\\Master\\SS2022\\Projektpraktikum\\ci_refine_list_mdl.pkl"
 #measurements_filepath = "C:\\Users\\Rafael\\Desktop\\praktikum bioanaloge\\projektpraktikum_animation_ss2022\\Rattay_2013_e7_o2.0_0.001000149883801424A.p"
 #measurements_filepath = "C:\\Users\\Erik\\Documents\\Elektrotechnik\\Master\\SS2022\\Projektpraktikum\\projektpraktikum_animation_ss2022\\projektpraktikum_animation_ss2022\\Rattay_2013_e7_o2.0_0.001000149883801424A.p"
 
@@ -62,11 +62,12 @@ class ui_settings(object):
         cmds.text(" -Model Specicifactions:")
         cmds.text(" ")
         cmds.text("First Neuron:")
-        self.firstNeur = cmds.intField(minValue=0, maxValue=399, value=0)
+        self.firstNeur = cmds.intField(minValue=0, maxValue=399, value=235)
         cmds.text("Last Neuron:")
-        self.lastNeur = cmds.intField(minValue=1, maxValue=400, value=400)
+        self.lastNeur = cmds.intField(minValue=1, maxValue=400, value=240)
         cmds.text("Step Size:")
         self.neur_stepsize = cmds.intField(minValue=1, maxValue=400, value=1)
+
 
         # measurement steps
         # cmds.text(" -Cochlea Structures:")
@@ -76,13 +77,21 @@ class ui_settings(object):
         cmds.text("Internodes:")
         cmds.text("Show: ", align='right')
         self.show_internodes = cmds.checkBox(label=' ')
+
+        cmds.setParent('..')
+        cmds.text("Sweep:")
+        cmds.rowColumnLayout(numberOfColumns=2, columnAttach=(1, 'left', 0), columnWidth=[(1, 70), (1, 395)])
+        self.sweep_color = cmds.colorSliderGrp(label='Colour:', rgb=(0.15, 0.3, 0.5), columnAlign=[1, 'right'])
+
+        cmds.setParent('..')
+        cmds.rowColumnLayout(numberOfColumns=3, columnAttach=(1, 'left', 0), columnWidth=[(1, 70), (2, 75), (3, 70)])
         cmds.text("Cochlea:")
         cmds.text("Import: ", align='right')
         self.import_cochlea = cmds.checkBox(label=' ')
         cmds.setParent('..')
         cmds.rowColumnLayout(numberOfColumns=1, columnAttach=(1, 'left', 0), columnWidth=[(1, 395)])
-        self.cochlea_transparency = cmds.colorSliderGrp( label='Transparency:', rgb=(0, 0, 0), columnAlign=[1, 'right'])
-        self.cochlea_color = cmds.colorSliderGrp(label='Colour:', rgb=(0.7, 0.7, 0.7), columnAlign=[1, 'right'])
+        self.cochlea_transparency = cmds.floatSliderGrp(field=True, label='Transparency:', minValue=0, maxValue=1,
+                                                     value=0.9, columnAlign=[1, 'right'])
 
         cmds.setParent('..')
         cmds.rowColumnLayout(numberOfColumns=3, columnAttach=(1, 'left', 0), columnWidth=[(1, 70), (2, 75), (3, 70)])
@@ -93,7 +102,6 @@ class ui_settings(object):
         cmds.rowColumnLayout(numberOfColumns=1, columnAttach=(1, 'left', 0), columnWidth=[(1, 395)])
         self.tube_transparency = cmds.floatSliderGrp(field=True, label='Transparency:', minValue=0, maxValue=1,
                                                      value=0.9, columnAlign=[1, 'right'])
-        self.tube_color = cmds.colorSliderGrp(label='Colour:', rgb=(0.7, 0.7, 0.7), columnAlign=[1, 'right'])
 
         cmds.setParent('..')
         cmds.rowColumnLayout(numberOfColumns=3, columnAttach=(1, 'left', 0), columnWidth=[(1, 70), (2, 75), (3, 70)])
@@ -104,7 +112,6 @@ class ui_settings(object):
         cmds.rowColumnLayout(numberOfColumns=1, columnAttach=(1, 'left', 0), columnWidth=[(1, 395)])
         self.nerve_transparency = cmds.floatSliderGrp(field=True, label='Transparency:', minValue=0, maxValue=1,
                                                       value=0, columnAlign=[1, 'right'])
-        self.nerve_color = cmds.colorSliderGrp(label='Colour:', rgb=(0.5, 0.7, 1), columnAlign=[1, 'right'])
         cmds.text(" ")
         cmds.text(" ")
 
@@ -118,7 +125,7 @@ class ui_settings(object):
         self.light_intensity = cmds.floatSliderGrp(field=True, label='Light Intensity:', minValue=0, maxValue=1,
                                                    value=0,
                                                    columnAlign=[1, 'right'])
-        self.camera_radius = cmds.floatSliderGrp(field=True, label='Camera Radius:', minValue=1, maxValue=25, value=12,
+        self.camera_radius = cmds.floatSliderGrp(field=True, label='Camera Radius:', minValue=1, maxValue=25, value=15,
                                                 columnAlign=[1, 'right'])
         self.camera_start = cmds.floatSliderGrp(field=True, label='Camera Startpoint:', minValue=-360, maxValue=360,
                                                 value=0,
@@ -141,24 +148,22 @@ class ui_settings(object):
         lastNeur = cmds.intField(self.lastNeur, query=True, value=True)
         neur_stepsize = cmds.intField(self.neur_stepsize, query=True, value=True)
         show_internodes = cmds.checkBox(self.show_internodes, query=True, value=True)
+        sweep_color = cmds.colorSliderGrp(self.sweep_color, query=True, rgbValue=True)
         import_cochlea = cmds.checkBox(self.import_cochlea, query=True, value=True)
-        cochlea_transparency = cmds.colorSliderGrp(self.cochlea_transparency, query=True, rgbValue=True)
-        cochlea_color = cmds.colorSliderGrp(self.cochlea_color, query=True, rgbValue=True)
+        cochlea_transparency = cmds.floatSliderGrp(self.cochlea_transparency, query=True, value=True)
         import_tube = cmds.checkBox(self.import_tube, query=True, value=True)
         tube_transparency = cmds.floatSliderGrp(self.tube_transparency, query=True, value=True)
-        tube_color = cmds.colorSliderGrp(self.tube_color, query=True, rgbValue=True)
         import_nerve = cmds.checkBox(self.import_nerve, query=True, value=True)
         nerve_transparency = cmds.floatSliderGrp(self.nerve_transparency, query=True, value=True)
-        nerve_color = cmds.colorSliderGrp(self.nerve_color, query=True, rgbValue=True)
         #keyframes = cmds.checkBox(self.keyframes, query = True, value = True)
         light_intensity = cmds.floatSliderGrp(self.light_intensity, query=True, value=True)
         camera_radius = cmds.floatSliderGrp(self.camera_radius, query=True, value=True)
         camera_start = cmds.floatSliderGrp(self.camera_start, query=True, value=True)
 
         cmds.deleteUI(self.window, window=True)
-        main(path, model_folderpath, firstNeur, lastNeur, neur_stepsize, show_internodes, import_cochlea, cochlea_transparency,
-                  cochlea_color, import_tube, tube_transparency, tube_color, import_nerve, nerve_transparency,
-                  nerve_color, light_intensity, camera_radius, camera_start)
+        main(path, model_folderpath, firstNeur, lastNeur, neur_stepsize, show_internodes, sweep_color, import_cochlea, cochlea_transparency,
+                  import_tube, tube_transparency, import_nerve, nerve_transparency,
+                  light_intensity, camera_radius, camera_start)
 
 
 
@@ -237,8 +242,9 @@ def import_voltage_traces(path):
     return measurements
 
 
-def import_neuron_coordinates():
+def import_neuron_coordinates(model_folderpath):
     print("Import coordinates...")
+    coords_filepath = model_folderpath + "\\ci_refine_list_mdl.pkl"
     obj = pd.read_pickle(coords_filepath)
 
     # Create neuron fibres from coordinate data
@@ -280,6 +286,53 @@ def import_neuron_coordinates():
 
     return vertices
 
+def import_sweeps(model_folderpath, sweep_color, disp_neur):
+    filepath = model_folderpath + "\\Neurons\\"
+
+    for i in disp_neur:
+        filename = filepath + "sweep" + str(i + 1) + ".fbx"
+        print(filename)
+        cmds.file(filename, i=True)
+
+    # create new shader and assign a color to it
+    sweep_shader = cmds.shadingNode('aiStandardSurface', asShader=1, name='ShaderSweeps')
+    cmds.setAttr((sweep_shader + '.baseColor'), sweep_color[0], sweep_color[1], sweep_color[2], type='double3')
+
+    cmds.select("Sweep", hierarchy=True)
+    cmds.hyperShade(a=sweep_shader)
+    cmds.select(clear=True)
+
+def import_cochlea_fnc(model_folderpath, cochlea_transparency):
+    print("importing cochlea model...")
+    cochlea_path = model_folderpath + '\\human_CL_anime.stl'
+    cochlea_model = cmds.file(cochlea_path, i=True)  # i = import
+    objTransform = "human_CL_anime"
+    objMesh = cmds.listRelatives(objTransform, shapes=True)[0]
+    objSE = cmds.listConnections(objMesh, type="shadingEngine")[0]
+    objMat = cmds.listConnections(objSE + ".surfaceShader")[0]
+    cmds.setAttr(objMat + '.transparency', cochlea_transparency, cochlea_transparency, cochlea_transparency, type='double3')
+
+def import_tube_fnc(model_folderpath, tube_transparency):
+    print("importing tube model...")
+    cochlea_path = model_folderpath + '\\ori_el_tube.stl'
+    cochlea_model = cmds.file(cochlea_path, i=True)  # i = import
+    objTransform = "ori_el_tube"
+    objMesh = cmds.listRelatives(objTransform, shapes=True)[0]
+    objSE = cmds.listConnections(objMesh, type="shadingEngine")[0]
+    objMat = cmds.listConnections(objSE + ".surfaceShader")[0]
+    cmds.setAttr(objMat + '.transparency', tube_transparency, tube_transparency, tube_transparency, type='double3')
+
+def import_nerve_fnc(model_folderpath, nerve_transparency):
+    print("importing nerve model...")
+    cochlea_path = model_folderpath + '\\human_MDL_v5-extend_v4.stl'
+    cochlea_model = cmds.file(cochlea_path, i=True)  # i = import
+    objTransform = "human_MDL_v5_extend_v4"
+    objMesh = cmds.listRelatives(objTransform, shapes=True)[0]
+    objSE = cmds.listConnections(objMesh, type="shadingEngine")[0]
+    objMat = cmds.listConnections(objSE + ".surfaceShader")[0]
+    cmds.setAttr(objMat + '.transparency', nerve_transparency, nerve_transparency, nerve_transparency, type='double3')
+
+
 
 def create_curves(vertices, disp_neur):
     # returns list of 400 curve objects, and list of 400 spans (int)
@@ -302,12 +355,12 @@ def create_curves(vertices, disp_neur):
     return curves, spans
 
 
-def calculate_node_coords(curves, spans, disp_neur, only_nodes):
+def calculate_node_coords(curves, spans, disp_neur, only_nodes, model_folderpath):
     print("Calcualting coordinates of nodes...")
     node_coords = []
 
     #comp_lens = pd.read_pickle('C:\\Users\\Rafael\\Documents\\GitHub\\Neuron_visualization_CI\\compartmentlengths_mm.pkl')
-    comp_lens = pd.read_pickle('C:\\Users\\Erik\\Documents\\Elektrotechnik\\Master\\SS2022\\Projektpraktikum\\Neuron_visualization_CI\\compartmentlengths_mm.pkl')
+    comp_lens = pd.read_pickle(model_folderpath + "\\compartmentlengths_mm.pkl")
     # iterate through every neuron
     for i in range(len(disp_neur)):
 
@@ -394,7 +447,7 @@ def applyMaterial(node, material_name): #
         #cmds.sets(node, empty=True, forceElement=shdSG)
         return shd, shdSG
 
-def create_frames(shader, measurements, node, disp_neur, frame_divider, only_nodes, comp_lens):
+def create_frames(shader, measurements, node, disp_neur, only_nodes, comp_lens):
     print("creating frames...")
     # iterate through all neurons
     max_v = np.max(measurements)
@@ -417,7 +470,7 @@ def create_frames(shader, measurements, node, disp_neur, frame_divider, only_nod
             radius_toggle2 = 0
 
             # iterate through all measurement steps
-            for k in range(0, len(measurements[disp_neur[i]][j]), frame_divider):
+            for k in range(0, len(measurements[disp_neur[i]][j])):
 
                 temp_meas = measurements[disp_neur[i]][j][k]
                 rel = (temp_meas - threshold) / (max_v - threshold)
@@ -492,7 +545,7 @@ def create_frames(shader, measurements, node, disp_neur, frame_divider, only_nod
                         cmds.setKeyframe(node[i][j], time=k, attribute='radius', value=radius)
 
 
-def create_camera(disp_neur, node_coords, camera_start): # make a turntable camera for animation
+def create_camera(disp_neur, node_coords, camera_start, camera_radius): # make a turntable camera for animation
     #create normal camera
     camera = cmds.camera()  # creates a camera
     cameraName = camera[0]  # gives back the camera name
@@ -524,7 +577,7 @@ def create_camera(disp_neur, node_coords, camera_start): # make a turntable came
     cmds.aimConstraint(sphere, cameraName, aimVector=(0, 0, -1), upVector = (0,-1,0))
     cmds.setAttr(sphere[0] + '.rotateY', camera_start) #set the camera start by rotating the center sphere
 
-    circle = cmds.circle(nr=(0, -1, 0), r=10) # create circle around center sphere for motion path of camera
+    circle = cmds.circle(nr=(0, -1, 0), r=camera_radius) # create circle around center sphere for motion path of camera
     cmds.setAttr(circle[0] + '.visibility', 0)  # motion path should never be seen
     cmds.parent(circle[0], sphere[0], relative=True)
     cmds.setAttr(sphere[0] + '.visibility', 0) # parent the motion path to the sphere so the center of the circle is the sphere location
@@ -534,9 +587,15 @@ def create_camera(disp_neur, node_coords, camera_start): # make a turntable came
 
 
 
-def main(path, model_folderpath, firstNeur, lastNeur, neur_stepsize, show_internodes, import_cochlea, cochlea_transparency,
-                  cochlea_color, import_tube, tube_transparency, tube_color, import_nerve, nerve_transparency,
-                  nerve_color, light_intensity, camera_radius, camera_start):
+def main(path, model_folderpath, firstNeur, lastNeur, neur_stepsize, show_internodes, sweep_color, import_cochlea, cochlea_transparency,
+                  import_tube, tube_transparency, import_nerve, nerve_transparency,
+                  light_intensity, camera_radius, camera_start):
+
+    #if path == "1":
+        #path = "C:\Users\Rafael\Desktop\praktikum bioanaloge\projektpraktikum_animation_ss2022\Rattay_2013_e7_o2.0_0.001000149883801424A.p"
+    #if model_folderpath == "1":
+        #model_folderpath = "C:\Users\Rafael\Desktop\praktikum bioanaloge\CL_geom_v2"
+
     ## cleaning the scene and all unused objects before creating new ones
     cmds.select(all=True)
     mySel = cmds.ls(sl=1)
@@ -546,30 +605,27 @@ def main(path, model_folderpath, firstNeur, lastNeur, neur_stepsize, show_intern
         mel.eval('hyperShadePanelMenuCommand("hyperShadePanel1", "deleteUnusedNodes");')
     ###################################################
 
-    frame_divider = 1 # which measurements should be keyframed
     disp_neur = range(firstNeur, lastNeur, neur_stepsize)   #display neuron from ... to ...
     creation_frames = "yes"
     material_name= 'standardSurface'
     only_nodes = 0
+    import_sweeps(model_folderpath, sweep_color, disp_neur)
     if import_cochlea:
-        cochlea_path = model_folderpath + '\\human_CL_anime.stl'
-        cochlea_model = cmds.file(cochlea_path, i = True) # i = import
-        print(cochlea_model)
-        objTransform = "human_CL_anime"
-        objMesh = cmds.listRelatives(objTransform, shapes=True)[0]
-        objSE = cmds.listConnections(objMesh, type="shadingEngine")[0]
-        objMat = cmds.listConnections(objSE + ".surfaceShader")[0]
-        cmds.setAttr(objMat +'.transparency', cochlea_transparency)
+        import_cochlea_fnc(model_folderpath, cochlea_transparency)
+    if import_tube:
+        import_tube_fnc(model_folderpath, tube_transparency)
+    if import_nerve:
+        import_nerve_fnc(model_folderpath, nerve_transparency)
 
-    vertices = import_neuron_coordinates()
+    vertices = import_neuron_coordinates(model_folderpath)
     measurements = import_voltage_traces(path) #path is the path from the UI for measurements filepath
 
     curves, spans = create_curves(vertices, disp_neur)
-    node_coords, comp_lens = calculate_node_coords(curves, spans, disp_neur, only_nodes)
+    node_coords, comp_lens = calculate_node_coords(curves, spans, disp_neur, only_nodes, model_folderpath)
     nodes, shader = create_nodes(node_coords, disp_neur, material_name)
     if creation_frames == "yes":
-        create_frames(shader, measurements, nodes, disp_neur, frame_divider, only_nodes, comp_lens)
-        create_camera(disp_neur, node_coords, camera_start) # camera_start gives the starting point of the camera during the animation
+        create_frames(shader, measurements, nodes, disp_neur, only_nodes, comp_lens)
+        create_camera(disp_neur, node_coords, camera_start, camera_radius) # camera_start gives the starting point of the camera during the animation
         
     
 
