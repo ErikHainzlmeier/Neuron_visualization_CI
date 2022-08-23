@@ -10,6 +10,7 @@ import maya.api.OpenMaya as om
 import maya.cmds as cmds
 import maya.mel as mel
 import pdb
+import mtoa.utils as mutils
 
 # Global Variables
 
@@ -79,8 +80,12 @@ class ui_settings(object):
         self.show_internodes = cmds.checkBox(label=' ')
 
         cmds.setParent('..')
+        cmds.rowColumnLayout(numberOfColumns=3, columnAttach=(1, 'left', 0), columnWidth=[(1, 70), (2, 75), (3, 70)])
         cmds.text("Sweep:")
-        cmds.rowColumnLayout(numberOfColumns=2, columnAttach=(1, 'left', 0), columnWidth=[(1, 70), (1, 395)])
+        cmds.text("Import: ", align='right')
+        self.import_sweeps = cmds.checkBox(label=' ', value=1)
+        cmds.setParent('..')
+        cmds.rowColumnLayout(numberOfColumns=1, columnAttach=(1, 'left', 0), columnWidth=[(1, 395)])
         self.sweep_color = cmds.colorSliderGrp(label='Colour:', rgb=(0.15, 0.3, 0.5), columnAlign=[1, 'right'])
 
         cmds.setParent('..')
@@ -122,8 +127,8 @@ class ui_settings(object):
         cmds.text(" ")
         cmds.setParent('..')
         cmds.rowColumnLayout(numberOfColumns=1, columnAttach=(1, 'left', 0), columnWidth=[(1, 395)])
-        self.light_intensity = cmds.floatSliderGrp(field=True, label='Light Intensity:', minValue=0, maxValue=1,
-                                                   value=0,
+        self.light_intensity = cmds.floatSliderGrp(field=True, label='Light Intensity:', minValue=0, maxValue=3,
+                                                   value=1,
                                                    columnAlign=[1, 'right'])
         self.camera_radius = cmds.floatSliderGrp(field=True, label='Camera Radius:', minValue=1, maxValue=25, value=15,
                                                 columnAlign=[1, 'right'])
@@ -148,6 +153,7 @@ class ui_settings(object):
         lastNeur = cmds.intField(self.lastNeur, query=True, value=True)
         neur_stepsize = cmds.intField(self.neur_stepsize, query=True, value=True)
         show_internodes = cmds.checkBox(self.show_internodes, query=True, value=True)
+        import_sweeps = cmds.checkBox(self.import_sweeps, query=True, value=True)
         sweep_color = cmds.colorSliderGrp(self.sweep_color, query=True, rgbValue=True)
         import_cochlea = cmds.checkBox(self.import_cochlea, query=True, value=True)
         cochlea_transparency = cmds.floatSliderGrp(self.cochlea_transparency, query=True, value=True)
@@ -161,7 +167,7 @@ class ui_settings(object):
         camera_start = cmds.floatSliderGrp(self.camera_start, query=True, value=True)
 
         cmds.deleteUI(self.window, window=True)
-        main(path, model_folderpath, firstNeur, lastNeur, neur_stepsize, show_internodes, sweep_color, import_cochlea, cochlea_transparency,
+        main(path, model_folderpath, firstNeur, lastNeur, neur_stepsize, show_internodes, import_sweeps, sweep_color, import_cochlea, cochlea_transparency,
                   import_tube, tube_transparency, import_nerve, nerve_transparency,
                   light_intensity, camera_radius, camera_start)
 
@@ -286,12 +292,12 @@ def import_neuron_coordinates(model_folderpath):
 
     return vertices
 
-def import_sweeps(model_folderpath, sweep_color, disp_neur):
+def import_sweeps_fnc(model_folderpath, sweep_color, disp_neur):
     filepath = model_folderpath + "\\Neurons\\"
+    print("importing sweeps...")
 
     for i in disp_neur:
         filename = filepath + "sweep" + str(i + 1) + ".fbx"
-        print(filename)
         cmds.file(filename, i=True)
 
     # create new shader and assign a color to it
@@ -413,13 +419,14 @@ def create_nodes(node_coords, disp_neur, material_name):
 
     # iterate through neurons
     for i in range(len(disp_neur)):
+        print("Node creation... Neuron", disp_neur[i])
         node.append([])  # Neues Neuron erstellen
         shader.append([])
         current_group = cmds.group(em=True, name='neuron' + str(i), parent='nodes')
         #print("Iterating neuron", i, ":", len(node_coords))
         # iterate through nodes
         for j in range(len(node_coords[i])):
-            print("Node creation... Neuron", disp_neur[i], "Node", j)
+
             #current_node = cmds.polySphere(r=node_size, name='mySphere#', sx=5, sy=5)
             current_node = cmds.sphere(r=node_size, s=4, name='mySphere#') # output of current_node is i.e ['mySphere1', 'makeNurbSphere1']
             node[i].append(current_node)
@@ -459,10 +466,11 @@ def create_frames(shader, measurements, node, disp_neur, only_nodes, comp_lens):
 
     #iterate through all neurons
     for i in range(len(disp_neur)):
+        print("Frame creation... Neuron", disp_neur[i])
         # iterate through all nodes
         for j in range(len(shader[i])):
 
-            print("Frame creation... Neuron", disp_neur[i], "Node", j)
+            
             #pdb.set_trace()
             max_v_node = max(measurements[disp_neur[i]][j])
             toggle = 0
@@ -585,9 +593,13 @@ def create_camera(disp_neur, node_coords, camera_start, camera_radius): # make a
     # constrain the camera to the circle path and set start time and end time of rotation
     cmds.pathAnimation(cameraName, stu=130, etu=600, curve=circle[0])
 
+def create_light(light_intensity):
+    Dommy = mutils.createLocator("aiSkyDomeLight", asLight=True)
+    objTransform = "aiSkyDomeLight1"
+    objMesh = cmds.listRelatives(objTransform, shapes=True)[0]
+    cmds.setAttr(objMesh + ".intensity", light_intensity)
 
-
-def main(path, model_folderpath, firstNeur, lastNeur, neur_stepsize, show_internodes, sweep_color, import_cochlea, cochlea_transparency,
+def main(path, model_folderpath, firstNeur, lastNeur, neur_stepsize, show_internodes, import_sweeps, sweep_color, import_cochlea, cochlea_transparency,
                   import_tube, tube_transparency, import_nerve, nerve_transparency,
                   light_intensity, camera_radius, camera_start):
 
@@ -607,9 +619,10 @@ def main(path, model_folderpath, firstNeur, lastNeur, neur_stepsize, show_intern
 
     disp_neur = range(firstNeur, lastNeur, neur_stepsize)   #display neuron from ... to ...
     creation_frames = "yes"
-    material_name= 'standardSurface'
+    material_name= 'aiStandardSurface'
     only_nodes = 0
-    import_sweeps(model_folderpath, sweep_color, disp_neur)
+    if import_sweeps:
+        import_sweeps_fnc(model_folderpath, sweep_color, disp_neur)
     if import_cochlea:
         import_cochlea_fnc(model_folderpath, cochlea_transparency)
     if import_tube:
@@ -626,6 +639,7 @@ def main(path, model_folderpath, firstNeur, lastNeur, neur_stepsize, show_intern
     if creation_frames == "yes":
         create_frames(shader, measurements, nodes, disp_neur, only_nodes, comp_lens)
         create_camera(disp_neur, node_coords, camera_start, camera_radius) # camera_start gives the starting point of the camera during the animation
+        create_light(light_intensity)
         
     print("deleting curves...")
     cmds.select("curves", hierarchy=True)
