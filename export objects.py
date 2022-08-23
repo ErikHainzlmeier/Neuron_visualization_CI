@@ -1,6 +1,6 @@
-filepath = "C:\\Users\\Rafael\\Desktop\\praktikum bioanaloge\\CL_geom_v2\\test\\"
+filepath = "C:\\Users\\Rafael\\Desktop\\praktikum bioanaloge\\CL_geom_v2\\Neurons\\"
 
-for i in range(150, 170):
+for i in range(0, 400):
     objName = 'sweep' + str(i+1)
     filename = filepath + objName
     cmds.select(objName)
