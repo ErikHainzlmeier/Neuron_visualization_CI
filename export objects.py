@@ -1,7 +1,14 @@
-filepath = "C:\\Users\\Rafael\\Desktop\\praktikum bioanaloge\\CL_geom_v2\\Neurons\\"
+filepath = "C:\\Users\\Rafael\\Desktop\\praktikum bioanaloge\\CL_geom_v2\\test\\"
 
-for i in range(400):
+for i in range(150, 170):
     objName = 'sweep' + str(i+1)
     filename = filepath + objName
     cmds.select(objName)
-    cmds.file(filename, force = True, options = "v = 0", type = "STLExport", exportSelected = True)
+    cmds.file(filename, force = True, type = "FBX Export", exportSelected = True)
+
+
+#FBX ist flexibel, aber erstellt einen neuen Shader für jedes Objekt
+#maya binary klein und schnell
+#maya Ascii erstellt shader für jedes neuron
+#stl ist schnell und klein, aber nicht schön
+#usd geht schnell, aber es importiert dann nichts xD
