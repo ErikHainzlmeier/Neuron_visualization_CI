@@ -364,6 +364,7 @@ def create_curves(vertices, disp_neur):
 def calculate_node_coords(curves, spans, disp_neur, only_nodes, model_folderpath):
     print("Calcualting coordinates of nodes...")
     node_coords = []
+    node_created = []
 
     #comp_lens = pd.read_pickle('C:\\Users\\Rafael\\Documents\\GitHub\\Neuron_visualization_CI\\compartmentlengths_mm.pkl')
     comp_lens = pd.read_pickle(model_folderpath + "\\compartmentlengths_mm.pkl")
@@ -377,8 +378,8 @@ def calculate_node_coords(curves, spans, disp_neur, only_nodes, model_folderpath
         while compare_len < curve_len:
             compare_len += comp_lens[k]
             k += 1
-        #print("\n\n\n\nCurve length:", curve_len, "\nNumber of Compartments:", k, "\nStacked compartment length:", compare_len, "\n\n")
 
+        node_created.append([])
         node_coords.append([])
         span_param = 0
 
@@ -400,15 +401,19 @@ def calculate_node_coords(curves, spans, disp_neur, only_nodes, model_folderpath
             if only_nodes == 1:
                 if comp_lens[j] <= 0.1: #node of ranvier sind alle kleiner als 0.1mm, internodes alle größer
                     node_coords[i].append(current_coords)
+                    node_created[i].append(1)
+                else:
+                    node_created[i].append(0)
             else:
                 node_coords[i].append(current_coords)
+                node_created.append(1)
 
             # print("Compartment:", j, "of", k)
             # print("Compartment length:", comp_lens[j], "/ compare length:", compare_len, "=", relativ)
             # print("spans[", i, "]:", spans[i], "span_param:", span_param)
             # print("current coords:", current_coords, "\n\n")
 
-    return node_coords, comp_lens
+    return node_coords, comp_lens, node_created
 
 def create_nodes(node_coords, disp_neur, material_name):
     print("creating nodes...")
@@ -454,7 +459,7 @@ def applyMaterial(node, material_name): #
         #cmds.sets(node, empty=True, forceElement=shdSG)
         return shd, shdSG
 
-def create_frames(shader, measurements, node, disp_neur, only_nodes, comp_lens):
+def create_frames(shader, measurements, node, disp_neur, only_nodes, comp_lens, node_created):
     print("creating frames...")
     # iterate through all neurons
     max_v = np.max(measurements)
@@ -469,7 +474,8 @@ def create_frames(shader, measurements, node, disp_neur, only_nodes, comp_lens):
         print("Frame creation... Neuron", disp_neur[i])
         # iterate through all nodes
         for j in range(len(shader[i])):
-
+            if node_created[i][j] == 0:
+                continue
             
             #pdb.set_trace()
             max_v_node = max(measurements[disp_neur[i]][j])
@@ -620,7 +626,7 @@ def main(path, model_folderpath, firstNeur, lastNeur, neur_stepsize, show_intern
     disp_neur = range(firstNeur, lastNeur, neur_stepsize)   #display neuron from ... to ...
     creation_frames = "yes"
     material_name= 'aiStandardSurface'
-    only_nodes = 0
+    only_nodes = 1 - show_internodes #das wird falschrum abgefragt, also kurz umdrehen
     if import_sweeps:
         import_sweeps_fnc(model_folderpath, sweep_color, disp_neur)
     if import_cochlea:
@@ -634,10 +640,10 @@ def main(path, model_folderpath, firstNeur, lastNeur, neur_stepsize, show_intern
     measurements = import_voltage_traces(path) #path is the path from the UI for measurements filepath
 
     curves, spans = create_curves(vertices, disp_neur)
-    node_coords, comp_lens = calculate_node_coords(curves, spans, disp_neur, only_nodes, model_folderpath)
+    node_coords, comp_lens, node_created = calculate_node_coords(curves, spans, disp_neur, only_nodes, model_folderpath)
     nodes, shader = create_nodes(node_coords, disp_neur, material_name)
     if creation_frames == "yes":
-        create_frames(shader, measurements, nodes, disp_neur, only_nodes, comp_lens)
+        create_frames(shader, measurements, nodes, disp_neur, only_nodes, comp_lens, node_created)
         create_camera(disp_neur, node_coords, camera_start, camera_radius) # camera_start gives the starting point of the camera during the animation
         create_light(light_intensity)
         
