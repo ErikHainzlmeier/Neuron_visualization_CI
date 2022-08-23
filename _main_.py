@@ -83,7 +83,7 @@ class ui_settings(object):
         cmds.rowColumnLayout(numberOfColumns=3, columnAttach=(1, 'left', 0), columnWidth=[(1, 70), (2, 75), (3, 70)])
         cmds.text("Sweep:")
         cmds.text("Import: ", align='right')
-        self.import_sweeps = cmds.checkBox(label=' ')
+        self.import_sweeps = cmds.checkBox(label=' ', value=1)
         cmds.setParent('..')
         cmds.rowColumnLayout(numberOfColumns=1, columnAttach=(1, 'left', 0), columnWidth=[(1, 395)])
         self.sweep_color = cmds.colorSliderGrp(label='Colour:', rgb=(0.15, 0.3, 0.5), columnAlign=[1, 'right'])
@@ -127,8 +127,8 @@ class ui_settings(object):
         cmds.text(" ")
         cmds.setParent('..')
         cmds.rowColumnLayout(numberOfColumns=1, columnAttach=(1, 'left', 0), columnWidth=[(1, 395)])
-        self.light_intensity = cmds.floatSliderGrp(field=True, label='Light Intensity:', minValue=0, maxValue=1,
-                                                   value=0,
+        self.light_intensity = cmds.floatSliderGrp(field=True, label='Light Intensity:', minValue=0, maxValue=3,
+                                                   value=1,
                                                    columnAlign=[1, 'right'])
         self.camera_radius = cmds.floatSliderGrp(field=True, label='Camera Radius:', minValue=1, maxValue=25, value=15,
                                                 columnAlign=[1, 'right'])
@@ -292,12 +292,12 @@ def import_neuron_coordinates(model_folderpath):
 
     return vertices
 
-def import_sweeps(model_folderpath, sweep_color, disp_neur):
+def import_sweeps_fnc(model_folderpath, sweep_color, disp_neur):
     filepath = model_folderpath + "\\Neurons\\"
+    print("importing sweeps...")
 
     for i in disp_neur:
         filename = filepath + "sweep" + str(i + 1) + ".fbx"
-        print(filename)
         cmds.file(filename, i=True)
 
     # create new shader and assign a color to it
@@ -419,13 +419,14 @@ def create_nodes(node_coords, disp_neur, material_name):
 
     # iterate through neurons
     for i in range(len(disp_neur)):
+        print("Node creation... Neuron", disp_neur[i])
         node.append([])  # Neues Neuron erstellen
         shader.append([])
         current_group = cmds.group(em=True, name='neuron' + str(i), parent='nodes')
         #print("Iterating neuron", i, ":", len(node_coords))
         # iterate through nodes
         for j in range(len(node_coords[i])):
-            print("Node creation... Neuron", disp_neur[i], "Node", j)
+
             #current_node = cmds.polySphere(r=node_size, name='mySphere#', sx=5, sy=5)
             current_node = cmds.sphere(r=node_size, s=4, name='mySphere#') # output of current_node is i.e ['mySphere1', 'makeNurbSphere1']
             node[i].append(current_node)
@@ -465,10 +466,11 @@ def create_frames(shader, measurements, node, disp_neur, only_nodes, comp_lens):
 
     #iterate through all neurons
     for i in range(len(disp_neur)):
+        print("Frame creation... Neuron", disp_neur[i])
         # iterate through all nodes
         for j in range(len(shader[i])):
 
-            print("Frame creation... Neuron", disp_neur[i], "Node", j)
+            
             #pdb.set_trace()
             max_v_node = max(measurements[disp_neur[i]][j])
             toggle = 0
@@ -617,10 +619,10 @@ def main(path, model_folderpath, firstNeur, lastNeur, neur_stepsize, show_intern
 
     disp_neur = range(firstNeur, lastNeur, neur_stepsize)   #display neuron from ... to ...
     creation_frames = "yes"
-    material_name= 'standardSurface'
+    material_name= 'aiStandardSurface'
     only_nodes = 0
     if import_sweeps:
-        import_sweeps(model_folderpath, sweep_color, disp_neur)
+        import_sweeps_fnc(model_folderpath, sweep_color, disp_neur)
     if import_cochlea:
         import_cochlea_fnc(model_folderpath, cochlea_transparency)
     if import_tube:
