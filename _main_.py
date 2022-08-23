@@ -10,6 +10,7 @@ import maya.api.OpenMaya as om
 import maya.cmds as cmds
 import maya.mel as mel
 import pdb
+import mtoa.utils as mutils
 
 # Global Variables
 
@@ -79,8 +80,12 @@ class ui_settings(object):
         self.show_internodes = cmds.checkBox(label=' ')
 
         cmds.setParent('..')
+        cmds.rowColumnLayout(numberOfColumns=3, columnAttach=(1, 'left', 0), columnWidth=[(1, 70), (2, 75), (3, 70)])
         cmds.text("Sweep:")
-        cmds.rowColumnLayout(numberOfColumns=2, columnAttach=(1, 'left', 0), columnWidth=[(1, 70), (1, 395)])
+        cmds.text("Import: ", align='right')
+        self.import_sweeps = cmds.checkBox(label=' ')
+        cmds.setParent('..')
+        cmds.rowColumnLayout(numberOfColumns=1, columnAttach=(1, 'left', 0), columnWidth=[(1, 395)])
         self.sweep_color = cmds.colorSliderGrp(label='Colour:', rgb=(0.15, 0.3, 0.5), columnAlign=[1, 'right'])
 
         cmds.setParent('..')
@@ -148,6 +153,7 @@ class ui_settings(object):
         lastNeur = cmds.intField(self.lastNeur, query=True, value=True)
         neur_stepsize = cmds.intField(self.neur_stepsize, query=True, value=True)
         show_internodes = cmds.checkBox(self.show_internodes, query=True, value=True)
+        import_sweeps = cmds.checkBox(self.import_sweeps, query=True, value=True)
         sweep_color = cmds.colorSliderGrp(self.sweep_color, query=True, rgbValue=True)
         import_cochlea = cmds.checkBox(self.import_cochlea, query=True, value=True)
         cochlea_transparency = cmds.floatSliderGrp(self.cochlea_transparency, query=True, value=True)
@@ -161,7 +167,7 @@ class ui_settings(object):
         camera_start = cmds.floatSliderGrp(self.camera_start, query=True, value=True)
 
         cmds.deleteUI(self.window, window=True)
-        main(path, model_folderpath, firstNeur, lastNeur, neur_stepsize, show_internodes, sweep_color, import_cochlea, cochlea_transparency,
+        main(path, model_folderpath, firstNeur, lastNeur, neur_stepsize, show_internodes, import_sweeps, sweep_color, import_cochlea, cochlea_transparency,
                   import_tube, tube_transparency, import_nerve, nerve_transparency,
                   light_intensity, camera_radius, camera_start)
 
@@ -585,9 +591,13 @@ def create_camera(disp_neur, node_coords, camera_start, camera_radius): # make a
     # constrain the camera to the circle path and set start time and end time of rotation
     cmds.pathAnimation(cameraName, stu=130, etu=600, curve=circle[0])
 
+def create_light(light_intensity):
+    Dommy = mutils.createLocator("aiSkyDomeLight", asLight=True)
+    objTransform = "aiSkyDomeLight1"
+    objMesh = cmds.listRelatives(objTransform, shapes=True)[0]
+    cmds.setAttr(objMesh + ".intensity", light_intensity)
 
-
-def main(path, model_folderpath, firstNeur, lastNeur, neur_stepsize, show_internodes, sweep_color, import_cochlea, cochlea_transparency,
+def main(path, model_folderpath, firstNeur, lastNeur, neur_stepsize, show_internodes, import_sweeps, sweep_color, import_cochlea, cochlea_transparency,
                   import_tube, tube_transparency, import_nerve, nerve_transparency,
                   light_intensity, camera_radius, camera_start):
 
@@ -609,7 +619,8 @@ def main(path, model_folderpath, firstNeur, lastNeur, neur_stepsize, show_intern
     creation_frames = "yes"
     material_name= 'standardSurface'
     only_nodes = 0
-    import_sweeps(model_folderpath, sweep_color, disp_neur)
+    if import_sweeps:
+        import_sweeps(model_folderpath, sweep_color, disp_neur)
     if import_cochlea:
         import_cochlea_fnc(model_folderpath, cochlea_transparency)
     if import_tube:
@@ -626,6 +637,7 @@ def main(path, model_folderpath, firstNeur, lastNeur, neur_stepsize, show_intern
     if creation_frames == "yes":
         create_frames(shader, measurements, nodes, disp_neur, only_nodes, comp_lens)
         create_camera(disp_neur, node_coords, camera_start, camera_radius) # camera_start gives the starting point of the camera during the animation
+        create_light(light_intensity)
         
     print("deleting curves...")
     cmds.select("curves", hierarchy=True)
