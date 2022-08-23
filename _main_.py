@@ -18,7 +18,7 @@ import pdb
 #coords_filepath = "C:\\Users\\Rafael\\Desktop\\praktikum bioanaloge\\ci_refine_list_mdl\\ci_refine_list_mdl.pkl"
 coords_filepath = "C:\\Users\\Erik\\Documents\\Elektrotechnik\\Master\\SS2022\\Projektpraktikum\\ci_refine_list_mdl.pkl"
 #measurements_filepath = "C:\\Users\\Rafael\\Desktop\\praktikum bioanaloge\\projektpraktikum_animation_ss2022\\Rattay_2013_e7_o2.0_0.001000149883801424A.p"
-measurements_filepath = "C:\\Users\\Erik\\Documents\\Elektrotechnik\\Master\\SS2022\\Projektpraktikum\\projektpraktikum_animation_ss2022\\projektpraktikum_animation_ss2022\\Rattay_2013_e7_o2.0_0.001000149883801424A.p"
+#measurements_filepath = "C:\\Users\\Erik\\Documents\\Elektrotechnik\\Master\\SS2022\\Projektpraktikum\\projektpraktikum_animation_ss2022\\projektpraktikum_animation_ss2022\\Rattay_2013_e7_o2.0_0.001000149883801424A.p"
 
 class ui_settings(object):
 
@@ -43,14 +43,18 @@ class ui_settings(object):
 
         # measurement settings
         cmds.rowColumnLayout(numberOfColumns=2, columnAttach=(1, 'left', 0), columnWidth=[(1, 145), (2, 250)])
-        cmds.text(" -Measurement Settings:")
+        cmds.text(" -Import Settings:")
         cmds.text(" ")
         cmds.text(label='Measurements Filepath:')
         self.filepath = cmds.textField()
+
+        # model folder filepath
+        cmds.text(label='Model Folderpath:')
+        self.model_folderpath = cmds.textField()
         cmds.text(" ")
         cmds.text(" ")
         cmds.text(" ")
-        cmds.text(" ")
+        #cmds.text(" ")
 
         # Model specifications
         cmds.setParent('..')
@@ -77,8 +81,7 @@ class ui_settings(object):
         self.import_cochlea = cmds.checkBox(label=' ')
         cmds.setParent('..')
         cmds.rowColumnLayout(numberOfColumns=1, columnAttach=(1, 'left', 0), columnWidth=[(1, 395)])
-        self.cochlea_transparency = cmds.floatSliderGrp(field=True, label='Transparency:', minValue=0, maxValue=1,
-                                                        value=0.8, columnAlign=[1, 'right'])
+        self.cochlea_transparency = cmds.colorSliderGrp( label='Transparency:', rgb=(0, 0, 0), columnAlign=[1, 'right'])
         self.cochlea_color = cmds.colorSliderGrp(label='Colour:', rgb=(0.7, 0.7, 0.7), columnAlign=[1, 'right'])
 
         cmds.setParent('..')
@@ -133,12 +136,13 @@ class ui_settings(object):
 
     def run_variables(self, *args):
         path = cmds.textField(self.filepath, query=True, text=True)
+        model_folderpath = cmds.textField(self.model_folderpath, query=True, text=True)
         firstNeur = cmds.intField(self.firstNeur, query=True, value=True)
         lastNeur = cmds.intField(self.lastNeur, query=True, value=True)
         neur_stepsize = cmds.intField(self.neur_stepsize, query=True, value=True)
         show_internodes = cmds.checkBox(self.show_internodes, query=True, value=True)
         import_cochlea = cmds.checkBox(self.import_cochlea, query=True, value=True)
-        cochlea_transparency = cmds.floatSliderGrp(self.cochlea_transparency, query=True, value=True)
+        cochlea_transparency = cmds.colorSliderGrp(self.cochlea_transparency, query=True, rgbValue=True)
         cochlea_color = cmds.colorSliderGrp(self.cochlea_color, query=True, rgbValue=True)
         import_tube = cmds.checkBox(self.import_tube, query=True, value=True)
         tube_transparency = cmds.floatSliderGrp(self.tube_transparency, query=True, value=True)
@@ -152,7 +156,7 @@ class ui_settings(object):
         camera_start = cmds.floatSliderGrp(self.camera_start, query=True, value=True)
 
         cmds.deleteUI(self.window, window=True)
-        main(path, firstNeur, lastNeur, neur_stepsize, show_internodes, import_cochlea, cochlea_transparency,
+        main(path, model_folderpath, firstNeur, lastNeur, neur_stepsize, show_internodes, import_cochlea, cochlea_transparency,
                   cochlea_color, import_tube, tube_transparency, tube_color, import_nerve, nerve_transparency,
                   nerve_color, light_intensity, camera_radius, camera_start)
 
@@ -530,7 +534,7 @@ def create_camera(disp_neur, node_coords, camera_start): # make a turntable came
 
 
 
-def main(path, firstNeur, lastNeur, neur_stepsize, show_internodes, import_cochlea, cochlea_transparency,
+def main(path, model_folderpath, firstNeur, lastNeur, neur_stepsize, show_internodes, import_cochlea, cochlea_transparency,
                   cochlea_color, import_tube, tube_transparency, tube_color, import_nerve, nerve_transparency,
                   nerve_color, light_intensity, camera_radius, camera_start):
     ## cleaning the scene and all unused objects before creating new ones
@@ -543,10 +547,19 @@ def main(path, firstNeur, lastNeur, neur_stepsize, show_internodes, import_cochl
     ###################################################
 
     frame_divider = 1 # which measurements should be keyframed
-    disp_neur = range(240,242)   #display neuron from ... to ...
+    disp_neur = range(firstNeur, lastNeur, neur_stepsize)   #display neuron from ... to ...
     creation_frames = "yes"
     material_name= 'standardSurface'
     only_nodes = 0
+    if import_cochlea:
+        cochlea_path = model_folderpath + '\\human_CL_anime.stl'
+        cochlea_model = cmds.file(cochlea_path, i = True) # i = import
+        print(cochlea_model)
+        objTransform = "human_CL_anime"
+        objMesh = cmds.listRelatives(objTransform, shapes=True)[0]
+        objSE = cmds.listConnections(objMesh, type="shadingEngine")[0]
+        objMat = cmds.listConnections(objSE + ".surfaceShader")[0]
+        cmds.setAttr(objMat +'.transparency', cochlea_transparency)
 
     vertices = import_neuron_coordinates()
     measurements = import_voltage_traces(path) #path is the path from the UI for measurements filepath
