@@ -171,8 +171,6 @@ class ui_settings(object):
                   import_tube, tube_transparency, import_nerve, nerve_transparency,
                   light_intensity, camera_radius, camera_start)
 
-
-
 def unflatten_nlist(l):
     # restore a previously for compression purpose flattened list
     # this function is coded to re-nest according to specific parameters added while flattening
@@ -203,7 +201,6 @@ def unflatten_nlist(l):
 
     return recc_l
 
-
 def decompress(data):
     # decompress data and return list into the nested format, indexed by [neuron number][compartment][time], values in V
     decompressed = fpzip.decompress(data, order='C')
@@ -211,7 +208,6 @@ def decompress(data):
         decompressed = decompressed[0]
 
     return unflatten_nlist(decompressed)
-
 
 def read_decompress(save_path, us_before=50):
     # this returns decompressed data of a neuron population and stimulation amplitude. The return list indices are [neuron_number, compartment, time]
@@ -240,13 +236,11 @@ def read_decompress(save_path, us_before=50):
 
     return decompressed
 
-
 def import_voltage_traces(path):
     print("Import voltage traces...")
     measurements = read_decompress(path)
     # print(len(measurements))
     return measurements
-
 
 def import_neuron_coordinates(model_folderpath):
     print("Import coordinates...")
@@ -338,8 +332,6 @@ def import_nerve_fnc(model_folderpath, nerve_transparency):
     objMat = cmds.listConnections(objSE + ".surfaceShader")[0]
     cmds.setAttr(objMat + '.transparency', nerve_transparency, nerve_transparency, nerve_transparency, type='double3')
 
-
-
 def create_curves(vertices, disp_neur):
     # returns list of 400 curve objects, and list of 400 spans (int)
     print("building curves...")
@@ -407,7 +399,7 @@ def calculate_node_coords(curves, spans, disp_neur, only_nodes, model_folderpath
             else:
                 node_coords[i].append(current_coords)
                 node_created.append(1)
-
+    print("node coords", node_coords, "\nnode created:", node_created)
             # print("Compartment:", j, "of", k)
             # print("Compartment length:", comp_lens[j], "/ compare length:", compare_len, "=", relativ)
             # print("spans[", i, "]:", spans[i], "span_param:", span_param)
@@ -473,10 +465,13 @@ def create_frames(shader, measurements, node, disp_neur, only_nodes, comp_lens, 
     for i in range(len(disp_neur)):
         print("Frame creation... Neuron", disp_neur[i])
         # iterate through all nodes
-        for j in range(len(shader[i])):
+        l = -1
+        for j in range(len(node_created[i])):
             if node_created[i][j] == 0:
+                #print("j:", j, "node_created:", node_created[i][j])
                 continue
-            
+            l += 1
+            #print("j:", j, "node_created:", node_created[i][j], "l:", l)
             #pdb.set_trace()
             max_v_node = max(measurements[disp_neur[i]][j])
             toggle = 0
@@ -494,51 +489,51 @@ def create_frames(shader, measurements, node, disp_neur, only_nodes, comp_lens, 
                     green = 1
                     blue = 1
                     red = 1
-                    cmds.setKeyframe(shader[i][j], time=k, attribute='baseColorR', value=red)
-                    cmds.setKeyframe(shader[i][j], time=k, attribute='baseColorG', value=green)
-                    cmds.setKeyframe(shader[i][j], time=k, attribute='baseColorB', value=blue)
-                    cmds.setKeyframe(node[i][j], time=k, attribute='visibility', value=0)
+                    cmds.setKeyframe(shader[i][l], time=k, attribute='baseColorR', value=red)
+                    cmds.setKeyframe(shader[i][l], time=k, attribute='baseColorG', value=green)
+                    cmds.setKeyframe(shader[i][l], time=k, attribute='baseColorB', value=blue)
+                    cmds.setKeyframe(node[i][l], time=k, attribute='visibility', value=0)
                     #Über/unter ersten Threshold
                 if toggle == 0 and rel > 0:
                     toggle = 1
                     blue = 1
                     radius = 0.01
                     visibility = 1
-                    cmds.setKeyframe(shader[i][j], time=k, attribute='baseColorB', value=blue)
-                    cmds.setKeyframe(node[i][j], time=k, attribute='visibility', value=visibility)
-                    cmds.setKeyframe(node[i][j], time=k, attribute='radius', value=radius)
+                    cmds.setKeyframe(shader[i][l], time=k, attribute='baseColorB', value=blue)
+                    cmds.setKeyframe(node[i][l], time=k, attribute='visibility', value=visibility)
+                    cmds.setKeyframe(node[i][l], time=k, attribute='radius', value=radius)
                 elif toggle > 0 and rel < 0:
                     toggle = 0
                     blue = 1
                     radius = 0.01
                     visibility = 0
-                    cmds.setKeyframe(shader[i][j], time=k, attribute='baseColorB', value=blue)
-                    cmds.setKeyframe(node[i][j], time=k, attribute='visibility', value=visibility)
-                    cmds.setKeyframe(node[i][j], time=k, attribute='radius', value=radius)
+                    cmds.setKeyframe(shader[i][l], time=k, attribute='baseColorB', value=blue)
+                    cmds.setKeyframe(node[i][l], time=k, attribute='visibility', value=visibility)
+                    cmds.setKeyframe(node[i][l], time=k, attribute='radius', value=radius)
 
                 #über/unter zweiten Threshold color:
                 if color_toggle2 == 0 and rel > yellow_threshold:
                     color_toggle2 = 1
                     blue = 0
                     green = 1
-                    cmds.setKeyframe(shader[i][j], time=k, attribute='baseColorB', value=blue)
-                    cmds.setKeyframe(shader[i][j], time=k, attribute='baseColorG', value=green)
+                    cmds.setKeyframe(shader[i][l], time=k, attribute='baseColorB', value=blue)
+                    cmds.setKeyframe(shader[i][l], time=k, attribute='baseColorG', value=green)
                 if color_toggle2 == 1 and rel < yellow_threshold:
                     color_toggle2 = 0
                     blue = 0
                     green = 1
-                    cmds.setKeyframe(shader[i][j], time=k, attribute='baseColorB', value=blue)
-                    cmds.setKeyframe(shader[i][j], time=k, attribute='baseColorG', value=green)
+                    cmds.setKeyframe(shader[i][l], time=k, attribute='baseColorB', value=blue)
+                    cmds.setKeyframe(shader[i][l], time=k, attribute='baseColorG', value=green)
 
                 #über/unter zweiten Threshold Größe:
                 if radius_toggle2 == 0 and rel > radius_threshold:
                     radius_toggle2 = 1
                     radius = 0.03
-                    cmds.setKeyframe(node[i][j], time=k, attribute='radius', value=radius)
+                    cmds.setKeyframe(node[i][l], time=k, attribute='radius', value=radius)
                 elif radius_toggle2 == 1 and rel < radius_threshold:
                     radius_toggle2 = 0
                     radius = 0.03
-                    cmds.setKeyframe(node[i][j], time=k, attribute='radius', value=radius)
+                    cmds.setKeyframe(node[i][l], time=k, attribute='radius', value=radius)
 
                 #peak
                 if temp_meas == max_v_node:
@@ -546,17 +541,17 @@ def create_frames(shader, measurements, node, disp_neur, only_nodes, comp_lens, 
                     if rel <= yellow_threshold:
                         #keyframe yellow calculation
                         blue = min(1, max(0, 1 - 2 * rel))
-                        cmds.setKeyframe(shader[i][j], time=k, attribute='baseColorB', value=blue)
+                        cmds.setKeyframe(shader[i][l], time=k, attribute='baseColorB', value=blue)
                     else:
                         # keyframe orange calculation
                         green = min(1, max(0, 2 - 2 * rel))
-                        cmds.setKeyframe(shader[i][j], time=k, attribute='baseColorG', value=green)
+                        cmds.setKeyframe(shader[i][l], time=k, attribute='baseColorG', value=green)
 
                     #Größe:
                     if rel <= radius_threshold:
                         #radius calculation
                         radius = 0.01 + 0.02 * rel / radius_threshold
-                        cmds.setKeyframe(node[i][j], time=k, attribute='radius', value=radius)
+                        cmds.setKeyframe(node[i][l], time=k, attribute='radius', value=radius)
 
 
 def create_camera(disp_neur, node_coords, camera_start, camera_radius): # make a turntable camera for animation
